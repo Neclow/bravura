@@ -1,0 +1,3 @@
+[submodule "extern/VBA-toolbox-master"]
+	path = extern/VBA-toolbox-master
+	url = https://github.com/MBB-team/VBA-toolbox.git
