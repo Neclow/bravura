@@ -108,8 +108,14 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs, remove_outliers=Tru
 
 
 def sample_behavioral_features(
-    coefs_mu, coefs_sigma, metrics, aggro, beliefs,
-    n_samples=1000, random_state=RANDOM_SEED,
+    coefs_mu,
+    coefs_sigma,
+    metrics,
+    aggro,
+    beliefs,
+    remove_outliers=True,
+    n_samples=1000,
+    random_state=RANDOM_SEED,
 ):
     """Generate MC samples of behavioral features from VBA posteriors.
 
@@ -156,7 +162,7 @@ def sample_behavioral_features(
             metrics=metrics,
             aggro=aggro,
             beliefs=beliefs,
-            remove_outliers=False,
+            remove_outliers=remove_outliers,
         )
         yield df_sampled
     np.savez_compressed(
