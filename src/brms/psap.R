@@ -2,94 +2,97 @@ source("src/brms/utils.R")
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 
+args <- commandArgs(trailingOnly = TRUE)
+OVERWRITE <- "--overwrite" %in% args
+
 out_dir <- "data/brms/psap"
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# Load PSAP data merged with Bravura clusters (exported from fig2.ipynb)
-df <- read.csv("data/processed/psap_long.csv", check.names = FALSE)
-names(df)[names(df) == "B-press proportion"] <- "B_press"
+# psap_ilr.csv has noise-replaced zeros and renormalized proportions
+df <- read.csv("data/processed/psap_ilr.csv")
 
-# ── Model registry ──────────────────────────────────────────────────────────
+# ── Model ────────────────────────────────────────────────────────────────────
 
-common <- list(data = df, chains = CHAINS, iter = ITER, warmup = WARMUP, seed = SEED)
+formula <- bf(cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 |p| Subject))
 
-models <- list(
-  list(name = "fit_gaussian", label = "Gaussian",
-       formula = bf(B_press ~ Cluster * phase),
-       family = gaussian(), prior = NULL),
-  list(name = "fit_zero_inflated_beta", label = "Zero-inflated Beta",
-       formula = bf(B_press ~ Cluster * phase, phi ~ 1, zi ~ 1),
-       family = zero_inflated_beta(), prior = NULL)
+fit <- fit_or_load(
+  name = "fit_dirichlet",
+  out_dir = out_dir,
+  formula = formula,
+  family = dirichlet(),
+  data = df,
+  chains = CHAINS,
+  iter = ITER,
+  warmup = WARMUP,
+  seed = SEED,
+  overwrite = OVERWRITE
 )
-
-# ── Fit models ───────────────────────────────────────────────────────────────
-
-fits <- list()
-for (m in models) {
-  args <- c(list(name = m$name, out_dir = out_dir, formula = m$formula, family = m$family), common)
-  if (!is.null(m$prior)) args$prior <- m$prior
-  fits[[m$name]] <- do.call(fit_or_load, args)
-}
-
-# ── Model comparison (LOO) ──────────────────────────────────────────────────
-
-loos <- lapply(fits, loo)
-comp_loo <- loo_compare(x = loos)
-
-label_map <- setNames(
-  sapply(models, `[[`, "label"),
-  sapply(models, `[[`, "name")
-)
-
-sink(file.path(out_dir, "model_comparison.txt"))
-cat("LOO-CV comparison:\n\n")
-print(comp_loo)
-cat("\n\nModel formulas:\n")
-for (m in models) cat(sprintf("  %-20s %s\n", m$label, deparse(m$formula)))
-sink()
-
-# ── Select best model ──────────────────────────────────────────────────────
-
-best_name <- rownames(comp_loo)[1]
-best <- fits[[best_name]]
-best_label <- label_map[best_name]
-cat("Best model (LOO):", best_label, "\n")
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
-save_diagnostics(best, best_label, out_dir)
+dirichlet_dir <- file.path(out_dir, "fit_dirichlet")
+dir.create(dirichlet_dir, showWarnings = FALSE)
 
-png(file.path(out_dir, "posterior_predictive_check_grouped.png"),
-    width = 10, height = 4, units = "in", res = 300)
-pp_check(best, ndraws = 100, type = "dens_overlay_grouped", group = "Cluster")
+sink(file.path(dirichlet_dir, "summary.txt"))
+cat("Model: Dirichlet\n\n")
+print(summary(fit))
+cat("\n\nPrior summary:\n")
+print(prior_summary(fit))
+sink()
+
+png(file.path(dirichlet_dir, "trace_plots.png"), width = 10, height = 8, units = "in", res = 300)
+print(plot(fit, ask = FALSE))
 dev.off()
 
-# ── Save CSV outputs ────────────────────────────────────────────────────────
+# ── Posterior predictions ────────────────────────────────────────────────────
 
-write.csv(as.data.frame(fixef(best)), file.path(out_dir, "fixed_effects.csv"))
-write.csv(as.data.frame(as_draws_df(best)), file.path(out_dir, "posterior_draws.csv"))
-
-# Posterior predicted draws per cell
 newdata <- expand.grid(
   Cluster = unique(df$Cluster),
   phase = unique(df$phase)
 )
 
-ppe_long <- newdata %>%
-  add_epred_draws(best) %>%
-  rename(B_press = .epred) %>%
-  select(Cluster, phase, B_press, .draw)
+epred <- newdata %>%
+  add_epred_draws(fit, re_formula = NA)
 
-write.csv(ppe_long, file.path(out_dir, "posterior_epred.csv"), row.names = FALSE)
+# tidybayes returns .category = "Earn", "Steal", "Protect"
+all_epred <- epred %>%
+  select(Cluster, phase, .draw, .category, .epred) %>%
+  rename(button = .category, proportion = .epred)
 
-pred_summary <- ppe_long %>%
-  group_by(Cluster, phase) %>%
+all_summary <- all_epred %>%
+  group_by(Cluster, phase, button) %>%
   summarise(
-    mean = mean(B_press),
-    Q2.5 = quantile(B_press, 0.025),
-    Q97.5 = quantile(B_press, 0.975),
+    mean = mean(proportion),
+    Q2.5 = quantile(proportion, 0.025),
+    Q97.5 = quantile(proportion, 0.975),
     .groups = "drop"
   )
-write.csv(pred_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
 
-cat("Done. Outputs saved to", out_dir, "\n")
+# ── Pairwise contrasts (CrI-based) ──────────────────────────────────────────
+
+bf_table <- pairwise_bf(
+  epred = as.data.frame(all_epred),
+  group_col = "Cluster",
+  value_col = "proportion",
+  by_cols = c("phase", "button"),
+  pairs = list(
+    c("Proactive", "Non-aggressive"),
+    c("Reactive", "Non-aggressive"),
+    c("Proactive", "Reactive")
+  )
+)
+
+cat("\nPairwise contrasts:\n")
+print(bf_table, digits = 3)
+
+# ── Save outputs ─────────────────────────────────────────────────────────────
+
+write.csv(
+  as.data.frame(fixef(fit)),
+  file.path(out_dir, "fit_dirichlet_fixed_effects.csv")
+)
+write.csv(all_epred, file.path(out_dir, "posterior_epred.csv"), row.names = FALSE)
+write.csv(all_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
+write.csv(bf_table, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+
+cat("\nDone. Outputs saved to", out_dir, "\n")
