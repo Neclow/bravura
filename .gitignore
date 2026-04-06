@@ -127,3 +127,27 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+# pixi environments
+.pixi/*
+!.pixi/config.toml
+
+# My notes
+notes/
+output/
+tmp/
+
+# Old/intermediate data
+data/old/
+
+# Paper
+archive/
+bib/
+tex/
+
+# Old code
+dev/
+
+# Claude stuff
+.claude
+CLAUDE.md
