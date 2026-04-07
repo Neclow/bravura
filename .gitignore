@@ -137,8 +137,9 @@ notes/
 output/
 tmp/
 
-# Old/intermediate data
-data/old/
+# Data (not tracked, see data/README.md)
+data/*
+!data/README.md
 
 # Paper
 archive/
@@ -147,6 +148,7 @@ tex/
 
 # Old code
 dev/
+Project_v1/
 
 # Claude stuff
 .claude

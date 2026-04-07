@@ -23,11 +23,18 @@ tqdm = ">=4.67.3,<5"
 r-emmeans = ">=2.0.2,<3"
 r-bayestestr = ">=0.17.0,<0.18"
 r-logspline = ">=2.1.22,<3"
+r-bayesfactor = ">=0.9.12_4.8,<0.10"
 
 [tasks]
 post_install = "bash scripts/post_install.sh"
 brms_shocks = { cmd = "Rscript src/brms/shocks.R", description = "Fit brms shock models (binomial, beta-binomial, K-fold CV)" }
 brms_psap = { cmd = "Rscript src/brms/psap.R", description = "Fit brms PSAP models (Gaussian, Beta, zero-inflated Beta)" }
+brms_delta_hr = { cmd = "Rscript src/brms/delta_hr.R", description = "Fit brms delta-HR models (Cluster x block, Gaussian/Student-t)" }
+brms_delta_hr_rep = { cmd = "Rscript src/brms/delta_hr_replication.R", description = "Replication analysis: Cohort B with Cohort A-informed priors" }
+brms_physio_mv = { cmd = "Rscript src/brms/physio_multivariate.R", description = "Multivariate physio model (HR, HRV, Resp, EDA × Cluster × block)" }
+brms_physio_cardiac = { cmd = "Rscript src/brms/physio_cardiac.R", description = "Cardiac model (HR + HRV PC1/PC2 × Cluster × block)" }
+brms_latency = { cmd = "Rscript src/brms/latency.R", description = "Shock latency model (lognormal, Cluster × opponent)" }
+brms_baseline_hr = { cmd = "Rscript src/brms/baseline_hr.R", description = "Test baseline HR by cluster (expected: no difference)" }
 
 [pypi-dependencies]
 statannotations = ">=0.7.2, <0.8"
