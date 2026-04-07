@@ -23,6 +23,16 @@ class GaussianMixtureWrapper(GaussianMixture):
         super().__init__(n_components=n_clusters, **kwargs)
         self.n_clusters = n_clusters
 
+    def fit(self, X, y=None):
+        super().fit(X, y)
+        self.cluster_centers_ = self.means_
+        return self
+
+    def fit_predict(self, X, y=None):
+        labels = super().fit_predict(X, y)
+        self.cluster_centers_ = self.means_
+        return labels
+
 
 class KMedoidsWrapper(KMedoids):
     """
@@ -70,9 +80,13 @@ CLUSTERERS = {
 }
 
 
-def fit_predict(X: np.ndarray, solver: str, k: int, random_state: int) -> np.ndarray:
+def fit_predict(
+    X: np.ndarray, solver: str, k: int, random_state: int, **kwargs
+) -> np.ndarray:
     try:
-        clusterer = CLUSTERERS[solver](n_clusters=k, random_state=random_state)
+        clusterer = CLUSTERERS[solver](
+            n_clusters=k, random_state=random_state, **kwargs
+        )
     except KeyError as exc:
         raise ValueError(
             (

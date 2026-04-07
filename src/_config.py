@@ -43,3 +43,15 @@ DEFAULT_CLUSTERING_FEATURES = [
     "belief_opp1",
     "belief_opp2",
 ]
+
+# Clusters
+# In _config.py or at the top of fig3:
+CLUSTERS = [
+    {"label": 2, "name": "Non-aggressive"},
+    {"label": 1, "name": "Proactive"},
+    {"label": 0, "name": "Reactive"},
+]
+
+PALETTE = {0: "#de8f05", 1: "#029e73", 2: "#0173b2"}
+
+CLUSTER_NAMES = {cl["label"]: cl["name"] for cl in CLUSTERS}

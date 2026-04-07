@@ -104,7 +104,7 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs, remove_outliers=Tru
         df.drop(index=outlier_ids, inplace=True)
     df = impute_missing(df)
 
-    return df
+    return df  # .drop(["belief_opp1", "belief_opp2"], axis=1, errors="ignore")
 
 
 def sample_behavioral_features(
