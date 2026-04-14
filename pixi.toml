@@ -24,6 +24,7 @@ r-emmeans = ">=2.0.2,<3"
 r-bayestestr = ">=0.17.0,<0.18"
 r-logspline = ">=2.1.22,<3"
 r-bayesfactor = ">=0.9.12_4.8,<0.10"
+r-report = ">=0.6.3,<0.7"
 
 [tasks]
 post_install = "bash scripts/post_install.sh"
@@ -35,6 +36,8 @@ brms_physio_mv = { cmd = "Rscript src/brms/physio_multivariate.R", description =
 brms_physio_cardiac = { cmd = "Rscript src/brms/physio_cardiac.R", description = "Cardiac model (HR + HRV PC1/PC2 × Cluster × block)" }
 brms_latency = { cmd = "Rscript src/brms/latency.R", description = "Shock latency model (lognormal, Cluster × opponent)" }
 brms_baseline_hr = { cmd = "Rscript src/brms/baseline_hr.R", description = "Test baseline HR by cluster (expected: no difference)" }
+brms_shocks_overview = { cmd = "Rscript src/brms/shocks_overview.R", description = "Opponent provocation effect (binomial, opponent × cohort)" }
+brms_trial_duration = { cmd = "Rscript src/brms/trial_duration.R", description = "Trial duration by decision type (Student-t, decision × cohort)" }
 
 [pypi-dependencies]
 statannotations = ">=0.7.2, <0.8"
