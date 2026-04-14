@@ -10,6 +10,7 @@ library(bayestestR)
 SEED <- 42
 CHAINS <- 4
 CORES <- 4
+options(mc.cores = CORES)
 ITER <- 4000
 WARMUP <- 2000
 

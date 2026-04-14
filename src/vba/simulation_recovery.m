@@ -17,7 +17,7 @@ function [cov_stats, corr_preds] = data_simulation(cohort, nSim)
 %     Number of simulations per subject (default: 10).
 
 if nargin < 2
-    nSim = 10;
+    nSim = 30;
 end
 
 data_dir = fullfile('data', ['cohort_' cohort]);
@@ -46,6 +46,7 @@ sigma = 1e0;
 x0 = zeros(1, 1);
 
 %% Run simulation-recovery
+rng(42);  % Reproducibility
 cov_stats = zeros(nSubject, 2);
 cov_preds = zeros(nSubject, 4, 4);
 corr_preds = zeros(nSubject, 4, 4);
@@ -88,7 +89,7 @@ for iSubject = 1:nSubject
     phi_pred = zeros(nSim, 4);
     for iSim = 1:nSim
         % Sample parameters from prior
-        phi = normrnd(0, 3.75, size(options.priors.muPhi));
+        phi = 0 + 3.75 * randn(size(options.priors.muPhi));
 
         % Simulate data
         [y_hat, ~, x0, ~, ~, u] = VBA_simulate( ...
@@ -101,7 +102,7 @@ for iSubject = 1:nSubject
 
     % Covariance and correlation of recovered estimates
     cov_pred = cov(phi_pred);
-    corr_pred = corr(phi_pred);
+    corr_pred = corrcoef(phi_pred);
 
     cov_stats(iSubject, :) = [det(cov_pred), cond(cov_pred)];
     cov_preds(iSubject, :, :) = cov_pred;
