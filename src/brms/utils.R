@@ -84,6 +84,27 @@ save_diagnostics <- function(best, best_label, out_dir, prior_fit = NULL) {
   dev.off()
 }
 
+contrasts_eti <- function(em_contrasts) {
+  # Return emmeans contrasts with equal-tailed 95% CrI instead of HPD
+  df <- as.data.frame(summary(em_contrasts, ci.method = "quantile"))
+  names(df)[names(df) == "lower.QL"] <- "Q2.5"
+  names(df)[names(df) == "upper.QL"] <- "Q97.5"
+  df
+}
+
+bf_table <- function(em_posterior, em_prior) {
+  # Build a contrast table with equal-tailed 95% CrI and Savage-Dickey BFs
+  contrasts <- contrasts_eti(em_posterior$contrasts)
+  bf_df <- as.data.frame(
+    bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
+  )
+  contrasts %>%
+    mutate(
+      BF10 = exp(bf_df$log_BF),
+      excl_zero = Q2.5 > 0 | Q97.5 < 0
+    )
+}
+
 # ── Pairwise BF table from posterior draws ──────────────────────────────────
 # epred: data.frame with columns for grouping vars, a value column, and .draw
 # group_col: name of the column with group labels (e.g., "Cluster")

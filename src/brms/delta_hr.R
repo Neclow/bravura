@@ -212,20 +212,11 @@ write.csv(
 em_posterior <- emmeans(best, pairwise ~ Cluster | block)
 em_prior <- emmeans(fit_prior, pairwise ~ Cluster | block)
 
-bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
-
-contrasts_summary <- as.data.frame(em_posterior$contrasts)
-bf_df <- as.data.frame(bf_obj)
-
-bf_table <- contrasts_summary %>%
-  mutate(
-    BF10 = exp(bf_df$log_BF),
-    excl_zero = lower.HPD > 0 | upper.HPD < 0
-  )
+bf_results <- bf_table(em_posterior, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
-print(bf_table, digits = 3)
+print(bf_results, digits = 3)
 
-write.csv(bf_table, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
 
 cat("Done. Outputs saved to", out_dir, "\n")

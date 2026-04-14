@@ -10,29 +10,32 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 df <- read.csv("data/processed/shock_long.csv")
 
+# ── Formulas ─────────────────────────────────────────────────────────────────
+
 formula_ri <- shocks | trials(15) ~ Cluster * opponent + (1 | subject)
-formula_rs <- shocks | trials(15) ~ Cluster *
-  opponent +
-  (1 + opponent | subject)
+formula_rs <- shocks | trials(15) ~ Cluster * opponent + (1 + opponent | subject)
 
 # ── Priors ───────────────────────────────────────────────────────────────────
+# Intercept: logit scale, N(0, 2) centres on 50% with broad coverage
+# Slopes: N(0, 1) weakly informative on logit scale
+# SD: half-normal, weakly informative
 
-informed_priors_v1 <- c(
-  prior(normal(-1, 2), class = "Intercept"),
-  prior(normal(0, 2), class = "b"),
+priors_binomial <- c(
+  prior(normal(0, 2), class = "Intercept"),
+  prior(normal(0, 1), class = "b"),
   prior(normal(0, 1.5), class = "sd")
 )
 
-# Tighter intercept based on reference group (Non-aggressive, Opp1): logit(0.067) ≈ -2.6
-informed_priors_v2 <- c(
-  prior(normal(-2.5, 1), class = "Intercept"),
-  prior(normal(0, 2), class = "b"),
-  prior(normal(0, 1.5), class = "sd")
+priors_binomial_rs <- c(
+  prior(normal(0, 2), class = "Intercept"),
+  prior(normal(0, 1), class = "b"),
+  prior(normal(0, 1.5), class = "sd"),
+  prior(lkj(2), class = "cor")
 )
 
-informed_priors_betabin <- c(
-  prior(normal(-2.5, 1), class = "Intercept"),
-  prior(normal(0, 2), class = "b"),
+priors_betabinomial <- c(
+  prior(normal(0, 2), class = "Intercept"),
+  prior(normal(0, 1), class = "b"),
   prior(normal(0, 1.5), class = "sd"),
   prior(gamma(1, 0.1), class = "phi")
 )
@@ -50,35 +53,28 @@ common <- list(
 models <- list(
   list(
     name = "fit_binomial",
-    label = "binomial (informed v1)",
+    label = "binomial RI",
     formula = formula_ri,
     family = binomial(),
-    prior = informed_priors_v1
-  ),
-  list(
-    name = "fit_binomial_v2",
-    label = "binomial (informed v2)",
-    formula = formula_ri,
-    family = binomial(),
-    prior = informed_priors_v2
+    prior = priors_binomial
   ),
   list(
     name = "fit_binomial_rs",
-    label = "binomial random slopes (informed v2)",
+    label = "binomial RS",
     formula = formula_rs,
     family = binomial(),
-    prior = informed_priors_v2
+    prior = priors_binomial_rs
   ),
   list(
     name = "fit_betabinomial",
-    label = "beta-binomial (informed v2)",
+    label = "beta-binomial RI",
     formula = formula_ri,
     family = beta_binomial(),
-    prior = informed_priors_betabin
+    prior = priors_betabinomial
   ),
   list(
     name = "fit_betabinomial_default",
-    label = "beta-binomial (default)",
+    label = "beta-binomial RI (default priors)",
     formula = formula_ri,
     family = beta_binomial(),
     prior = NULL
@@ -109,17 +105,6 @@ for (m in models) {
 loos <- lapply(fits, loo)
 comp_loo <- loo_compare(x = loos)
 
-# # ── K-fold CV (optional, ~1h) ──────────────────────────────────────────────
-# cat("Running K-fold CV (this may take a while)...\n")
-# kfolds <- list()
-# for (m in models) {
-#   kfolds[[m$name]] <- kfold_or_load(
-#     fits[[m$name]], m$name, out_dir, overwrite = OVERWRITE
-#   )
-# }
-# comp_kfold <- loo_compare(x = kfolds)
-
-# Build label lookup from registry
 label_map <- setNames(
   sapply(models, `[[`, "label"),
   sapply(models, `[[`, "name")
@@ -132,10 +117,6 @@ cat("\n\nModel formulas:\n")
 for (m in models) {
   cat(sprintf("  %-30s %s\n", m$name, deparse(formula(fits[[m$name]]))))
 }
-cat("\n\nBinomial (informed v2) priors:\n")
-prior_summary(fits[["fit_binomial_v2"]])
-cat("\n\nBinomial random slopes (informed v2) priors:\n")
-prior_summary(fits[["fit_binomial_rs"]])
 sink()
 
 # ── Select best model ──────────────────────────────────────────────────────
@@ -153,7 +134,7 @@ fit_prior <- fit_or_load(
   formula = formula(best),
   data = df,
   family = family(best),
-  prior = informed_priors_v2,
+  prior = priors_binomial,
   sample_prior = "only",
   chains = CHAINS,
   iter = 12000,
@@ -224,19 +205,11 @@ em_prior <- emmeans(fit_prior, pairwise ~ Cluster | opponent)
 
 bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
 
-# Merge emmeans summary (estimate + CrI) with BFs into one table
-contrasts_summary <- as.data.frame(em_posterior$contrasts)
-bf_df <- as.data.frame(bf_obj)
-
-bf_table <- contrasts_summary %>%
-  mutate(
-    BF10 = exp(bf_df$log_BF),
-    excl_zero = lower.HPD > 0 | upper.HPD < 0
-  )
+bf_results <- bf_table(em_posterior, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
-print(bf_table, digits = 3)
+print(bf_results, digits = 3)
 
-write.csv(bf_table, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
 
 cat("Done. Outputs saved to", out_dir, "\n")

@@ -68,19 +68,12 @@ fit_prior <- fit_or_load(
 em_post <- emmeans(fit, pairwise ~ Cluster)
 em_prior <- emmeans(fit_prior, pairwise ~ Cluster)
 
-bf_obj <- bayesfactor_parameters(em_post$contrasts, prior = em_prior$contrasts)
-
-contrasts_summary <- as.data.frame(em_post$contrasts)
-bf_df <- as.data.frame(bf_obj)
-
-bf_table <- contrasts_summary
-bf_table$BF10 <- exp(bf_df$log_BF)
-bf_table$excl_zero <- contrasts_summary$lower.HPD > 0 | contrasts_summary$upper.HPD < 0
+bf_results <- bf_table(em_post, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
-print(bf_table[, c("contrast", "estimate", "lower.HPD", "upper.HPD", "BF10", "excl_zero")], digits = 3)
+print(bf_results[, c("contrast", "estimate", "Q2.5", "Q97.5", "BF10", "excl_zero")], digits = 3)
 
-write.csv(bf_table, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
 
 # ── Posterior predicted means per cluster ─────────────────────────────────────
 

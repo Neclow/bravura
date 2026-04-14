@@ -102,7 +102,7 @@ dv_labels <- c("HR", "HRV_RC1", "HRV_RC2", "HRV_RC3")
 all_contrasts <- list()
 for (i in seq_along(dvs)) {
   em <- emmeans(fit, pairwise ~ Cluster | block, resp = dvs[i])
-  contr <- as.data.frame(em$contrasts)
+  contr <- contrasts_eti(em$contrasts)
   contr$DV <- dv_labels[i]
   all_contrasts[[i]] <- contr
 }
@@ -110,7 +110,7 @@ for (i in seq_along(dvs)) {
 contrasts_df <- do.call(rbind, all_contrasts)
 
 cat("Pairwise contrasts (all DVs):\n")
-print(contrasts_df[, c("DV", "block", "contrast", "estimate", "lower.HPD", "upper.HPD")],
+print(contrasts_df[, c("DV", "block", "contrast", "estimate", "Q2.5", "Q97.5")],
       digits = 3)
 
 write.csv(contrasts_df, file.path(out_dir, "pairwise_contrasts.csv"), row.names = FALSE)
