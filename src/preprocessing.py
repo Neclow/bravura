@@ -6,7 +6,6 @@ from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import BayesianRidge
 from sklearn.metrics import brier_score_loss, roc_auc_score
-from tqdm import tqdm
 
 from src._config import (
     MAX_BELIEF_COHORT_A,
@@ -58,7 +57,7 @@ def collect_metrics(vba_metrics, pred, actual):
     return metrics
 
 
-def load_behavioral_features(coefs, metrics, aggro, beliefs, remove_outliers=True):
+def load_behavioral_features(coefs, metrics, aggro, beliefs=None, remove_outliers=True):
     """Build the behavioral feature dataframe from raw data sources.
 
     Parameters
@@ -96,15 +95,16 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs, remove_outliers=Tru
     df["shock_opp1"] = shock_opp1.reindex(df.index)
     df["shock_opp2"] = shock_opp2.reindex(df.index)
     df["first_shock"] = first_shock.reindex(df.index)
-    df["belief_opp1"] = beliefs["opponent1"].reindex(df.index)
-    df["belief_opp2"] = beliefs["opponent2"].reindex(df.index)
+    if beliefs is not None:
+        df["belief_opp1"] = beliefs["opponent1"].reindex(df.index)
+        df["belief_opp2"] = beliefs["opponent2"].reindex(df.index)
 
     if remove_outliers:
         outlier_ids = detect_outliers(df, aggro)
         df.drop(index=outlier_ids, inplace=True)
     df = impute_missing(df)
 
-    return df  # .drop(["belief_opp1", "belief_opp2"], axis=1, errors="ignore")
+    return df
 
 
 def sample_behavioral_features(
@@ -116,6 +116,7 @@ def sample_behavioral_features(
     remove_outliers=True,
     n_samples=1000,
     random_state=RANDOM_SEED,
+    cols_to_use=None,
 ):
     """Generate MC samples of behavioral features from VBA posteriors.
 
@@ -149,7 +150,7 @@ def sample_behavioral_features(
 
     all_coefs = np.empty((n_samples, *coefs_mu.shape))
 
-    for mc in tqdm(range(n_samples)):
+    for mc in range(n_samples):
         coefs_sampled = np.array(
             [
                 rng.multivariate_normal(mu, sigma)
@@ -164,10 +165,13 @@ def sample_behavioral_features(
             beliefs=beliefs,
             remove_outliers=remove_outliers,
         )
+        if cols_to_use is not None:
+            df_sampled = df_sampled[cols_to_use]
         yield df_sampled
-    np.savez_compressed(
-        "data/cohort_a/mc_coefs.npz", coefs=all_coefs, seed=random_state
-    )
+    # if save:
+    #     np.savez_compressed(
+    #         "data/cohort_a/mc_coefs.npz", coefs=all_coefs, seed=random_state
+    #     )
 
 
 def detect_outliers(df, aggro):

@@ -5,12 +5,15 @@ import numpy as np
 import pandas as pd
 
 from kmedoids import KMedoids
+from matplotlib.patches import Ellipse
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import pdist
+from sklearn.base import ClusterMixin
 from sklearn.cluster import KMeans
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import pairwise_distances_argmin, silhouette_score
 from sklearn.mixture import GaussianMixture
-from sklearn.preprocessing import LabelEncoder, StandardScaler
+from sklearn.preprocessing import StandardScaler
+from tqdm.auto import tqdm
 
 
 class GaussianMixtureWrapper(GaussianMixture):
@@ -43,8 +46,6 @@ class KMedoidsWrapper(KMedoids):
     """
 
     def predict(self, X):
-        from sklearn.metrics.pairwise import pairwise_distances_argmin
-
         Y = self.cluster_centers_
         X = pairwise_distances_argmin(X, Y=Y, metric=self.metric)
         return X
@@ -52,9 +53,8 @@ class KMedoidsWrapper(KMedoids):
 
 @dataclass
 class ClusterResult:
-    clusterer: object
+    clusterer: ClusterMixin
     labels: np.ndarray
-    silhouette: float
     sizes: list
 
 
@@ -74,15 +74,15 @@ class FuzzyClusterResult:
 CLUSTERERS = {
     "k-means": partial(KMeans, n_init=10),
     "k-medoids": partial(KMedoidsWrapper, method="fasterpam", metric="euclidean"),
-    "gmm": partial(GaussianMixtureWrapper, n_init=5),
+    "gmm": partial(GaussianMixtureWrapper, n_init=10),
     # "hac": partial(AgglomerativeClusteringWrapper, linkage="ward"),
     # "spectral": partial(SpectralClustering, affinity="rbf"),
 }
 
 
 def fit_predict(
-    X: np.ndarray, solver: str, k: int, random_state: int, **kwargs
-) -> np.ndarray:
+    X: np.ndarray, solver: str, k: int, random_state: int, metric=None, **kwargs
+) -> ClusterResult:
     try:
         clusterer = CLUSTERERS[solver](
             n_clusters=k, random_state=random_state, **kwargs
@@ -97,12 +97,9 @@ def fit_predict(
 
     labels = clusterer.fit_predict(X)
 
-    sil = silhouette_score(X, labels)
-
     return ClusterResult(
         clusterer=clusterer,
         labels=labels,
-        silhouette=sil,
         sizes=np.bincount(labels, minlength=k).tolist(),
     )
 
@@ -117,15 +114,18 @@ def fuzzy_fit_predict(
     n_b,
     ref_labels,
     n_samples,
+    save=False,
 ):
-    scalers = []
+    scaler_means = []
+    scaler_scales = []
     label_counts_a = np.zeros((n_a, k), dtype=int)
     label_counts_b = np.zeros((n_b, k), dtype=int)
-    for X_mc_a, X_mc_b in zip(iterator_a, iterator_b):
+    for X_mc_a, X_mc_b in tqdm(
+        zip(iterator_a, iterator_b), total=n_samples, desc="Fuzzy clustering"
+    ):
         scaler = StandardScaler()
         X_a_scaled = scaler.fit_transform(X_mc_a)
         X_b_scaled = scaler.transform(X_mc_b)
-        scalers.append(scaler)
 
         res_mc = fit_predict(X_a_scaled, solver=solver, k=k, random_state=random_state)
         labels_a_matched, label_map = _match_labels(res_mc.labels, ref_labels, k)
@@ -138,23 +138,30 @@ def fuzzy_fit_predict(
         for s in range(n_b):
             label_counts_b[s, labels_b_matched[s]] += 1
 
+        scaler_means.append(scaler.mean_)
+        scaler_scales.append(scaler.scale_)
+
+    scaler_means = np.array(scaler_means)
+    scaler_scales = np.array(scaler_scales)
+
     consensus_a = label_counts_a.argmax(axis=1)
     consensus_b = label_counts_b.argmax(axis=1)
     stability_a = (label_counts_a.max(axis=1) / n_samples).mean()
     stability_b = (label_counts_b.max(axis=1) / n_samples).mean()
 
-    np.savez_compressed(
-        f"data/processed/mc_consensus_{solver}_{k}.npz",
-        label_counts_a=label_counts_a,
-        label_counts_b=label_counts_b,
-        consensus_a=consensus_a,
-        consensus_b=consensus_b,
-        stability_a=stability_a,
-        stability_b=stability_b,
-        scaler_means=np.array([s.mean_ for s in scalers]),
-        scaler_scales=np.array([s.scale_ for s in scalers]),
-        n_samples=n_samples,
-    )
+    if save:
+        np.savez_compressed(
+            f"data/processed/mc_consensus_{solver}_{k}.npz",
+            label_counts_a=label_counts_a,
+            label_counts_b=label_counts_b,
+            consensus_a=consensus_a,
+            consensus_b=consensus_b,
+            stability_a=stability_a,
+            stability_b=stability_b,
+            scaler_means=scaler_means,
+            scaler_scales=scaler_scales,
+            n_samples=n_samples,
+        )
 
     return FuzzyClusterResult(
         consensus_a=consensus_a,
@@ -163,8 +170,8 @@ def fuzzy_fit_predict(
         stability_b=stability_b,
         label_counts_a=label_counts_a,
         label_counts_b=label_counts_b,
-        scaler_means=np.array([s.mean_ for s in scalers]),
-        scaler_scales=np.array([s.scale_ for s in scalers]),
+        scaler_means=scaler_means,
+        scaler_scales=scaler_scales,
         n_samples=n_samples,
     )
 
@@ -179,13 +186,29 @@ def _shift(arr, num, fill_value=np.nan):
         return np.concatenate((arr[-num:], np.full(-num, fill_value)))
 
 
-def ablate_k(X, solver, k_range, random_state):
+def ablate_k(X, solver, k_range, random_state, **kwargs):
     results = {}
-    gaps, sks = np.zeros((len(k_range),)), np.zeros((len(k_range),))
+    gaps, sks, sils = (
+        np.zeros((len(k_range),)),
+        np.zeros((len(k_range),)),
+        np.zeros((len(k_range),)),
+    )
     for i, k in enumerate(k_range):
         res = fit_predict(X, solver, k, random_state)
         y = res.labels
-        gap, sk, method = gap_score(res.clusterer, X, y, random_state=random_state)
+
+        gap, sk, method = gap_score(
+            res.clusterer, X, y, random_state=random_state, **kwargs
+        )
+
+        sil = silhouette_score(
+            X,
+            res.labels,
+            metric=kwargs.get("metric", "euclidean"),
+            random_state=random_state,
+        )
+
+        sils[i] = sil
         gaps[i] = gap
         sks[i] = sk
         results[k] = res
@@ -195,6 +218,7 @@ def ablate_k(X, solver, k_range, random_state):
     gaps_shifted = _shift(gaps, -1)
     diff = gaps - gaps_shifted + sks_shifted
 
+    df["silhouette"] = sils
     df["gap"] = gaps
     df["gap_diff"] = diff
 
@@ -249,14 +273,10 @@ def pooled_distortion_score(X, labels, metric="sqeuclidean"):
     metric : string
         The metric to use when calculating distance between instances in a
         feature array. If metric is a string, it must be one of the options
-        allowed by `sklearn.metrics.pairwise.pairwise_distances
-        <http://bit.ly/2Z7Dxnn>`_
-    .. todo:: add sample_size and random_state kwds similar to silhouette_score
+        allowed by `sklearn.metrics.pairwise.pairwise_distances`
     """
     # Encode labels to get unique centers and groups
-    label_encoder = LabelEncoder()
-    label_encoder.fit(labels)
-    unique_labels = label_encoder.classes_
+    unique_labels = np.unique(labels)
 
     # Sum of the distortions
     distortion = 0
@@ -335,7 +355,24 @@ def gap_score(
     if random_state is not None:
         np.random.seed(random_state)
 
+    assert method in [
+        "log",
+        "star",
+    ], f'Method {method} not available. Use "log" or "star".'
+
+    # For GMMs, use negative log-likelihood as the dispersion (Scott & Symons
+    # 1971, cited in Tibshirani et al. 2001). For other clusterers, use the
+    # pairwise-distance W_k from the original paper.
+    # use_nll = hasattr(clusterer, "score") and hasattr(clusterer, "covariances_")
+
     # Compute real dispersion
+    # if hasattr(clusterer, "covariances_"):
+    #     # GMM: score returns mean log-likelihood per sample
+    #     real_dispersion = -clusterer.score(X) * X.shape[0]
+    # elif hasattr(clusterer, "inertia_"):
+    #     # KMeans: inertia is the distortion directly
+    #     real_dispersion = clusterer.inertia_
+    # else:
     real_dispersion = pooled_distortion_score(X, labels)
 
     # Compute reference dispersions
@@ -345,6 +382,10 @@ def gap_score(
     for i in range(n_refs):
 
         # Create new random reference set uniformly over the range of each feature
+        # if distribution == "normal_full":
+        #     mean = X.mean(axis=0)
+        #     cov = np.cov(X, rowvar=False) + 1e-8 * np.eye(X.shape[1])
+        #     random_data = np.random.multivariate_normal(mean, cov, size=X.shape[0])
         if distribution == "normal":
             random_data = np.random.normal(loc=X.mean(0), scale=X.std(0), size=X.shape)
         elif distribution == "uniform":
@@ -353,11 +394,19 @@ def gap_score(
                 np.random.random_sample(size=X.shape) * (x_max - x_min) + x_min
             )
         else:
-            raise ValueError("Unknown distribution.")
+            raise ValueError(f"Unknown distribution: {distribution}")
 
         # Fit clusterer and compute distortion score
         labels = clusterer.fit_predict(random_data)
 
+        # if hasattr(clusterer, "covariances_"):
+        #     # GMM: score returns mean log-likelihood per sample
+        #     dispersion = -clusterer.score(random_data) * X.shape[0]
+        # elif hasattr(clusterer, "inertia_"):
+        #     # KMeans: inertia is the distortion directly
+        #     dispersion = clusterer.inertia_
+        # else:
+        #     dispersion = pooled_distortion_score(random_data, labels, metric=metric)
         dispersion = pooled_distortion_score(random_data, labels)
 
         ref_dispersions[i] = dispersion
@@ -366,12 +415,10 @@ def gap_score(
         # https://statweb.stanford.edu/~gwalther/gap
         final_ref_dispersion = np.log(ref_dispersions)
         final_real_dispersion = np.log(real_dispersion)
-
     elif method == "star":
         # https://arxiv.org/pdf/1103.4767.pdf
         final_ref_dispersion = ref_dispersions
         final_real_dispersion = real_dispersion
-
     else:
         raise ValueError(f'Method {method} not available. Use "log" or "star".')
 
@@ -379,3 +426,11 @@ def gap_score(
     sdk = np.std(final_ref_dispersion)
     sk = np.sqrt(1.0 + 1.0 / n_refs) * sdk
     return gap, sk, method
+
+
+def confidence_ellipse(x, y, ax, n_std=2.0, **kwargs):
+    cov = np.cov(x, y)
+    vals, vecs = np.linalg.eigh(cov)
+    angle = np.degrees(np.arctan2(vecs[1, 1], vecs[0, 1]))
+    w, h = 2 * n_std * np.sqrt(vals)
+    ax.add_patch(Ellipse((x.mean(), y.mean()), w, h, angle=angle, **kwargs))
