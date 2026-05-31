@@ -149,7 +149,7 @@ output/
 
 # Old code
 dev/
-Project_v1/
+old/
 
 # Claude stuff
 .claude

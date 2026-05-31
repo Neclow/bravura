@@ -1,3 +1,13 @@
 [submodule "extern/VBA-toolbox-master"]
 	path = extern/VBA-toolbox-master
 	url = https://github.com/MBB-team/VBA-toolbox.git
+[submodule "extern/MarcusVollmer-HRV"]
+	path = extern/MarcusVollmer-HRV
+	url = https://github.com/MarcusVollmer/HRV.git
+[submodule "extern/PhysioNet-Cardiovascular-Signal-Toolbox"]
+	path = extern/PhysioNet-Cardiovascular-Signal-Toolbox
+	url = https://github.com/Neclow/PhysioNet-Cardiovascular-Signal-Toolbox.git
+	branch = bravura
+[submodule "extern/ledalab"]
+	path = extern/ledalab
+	url = https://github.com/ledalab/ledalab.git
