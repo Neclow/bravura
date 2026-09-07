@@ -1,10 +1,8 @@
-library(BayesRep)
 source("src/brms/utils.R")
 
 # ── Setup ────────────────────────────────────────────────────────────────────
-# Replication analysis for Δ₁HR using BayesRep (Pawel & Held, 2022).
-# Effect estimates: pairwise mean differences + Welch SEs from raw data.
-# Computed on blocks 1.1 and 2.1 (where Cohort A brms showed strong effects).
+# Replication analysis for Δ₁HR: pairwise effect sizes (Cohen's d) comparing
+# Cohort A (discovery) and Cohort B (replication) across blocks 1.1 and 2.1.
 
 out_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr_replication")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
@@ -61,13 +59,6 @@ for (blk in blocks) {
     )
     d_b <- (mean(x2_b) - mean(x1_b)) / pooled_sd_b
 
-    # BayesRep
-    bf_r <- BFr(to = to, so = so, tr = tr, sr = sr)
-    bf_s <- tryCatch(
-      BFs(to = to, so = so, tr = tr, sr = sr),
-      error = function(e) NA
-    )
-
     results[[idx]] <- data.frame(
       block = blk,
       contrast = paste0(c2, " - ", c1),
@@ -79,55 +70,21 @@ for (blk in blocks) {
       d_replication = round(d_b, 2),
       n_original = paste0(n2_a, " vs ", n1_a),
       n_replication = paste0(n2_b, " vs ", n1_b),
-      BFr = round(bf_r, 3),
-      BFs = round(bf_s, 3),
       stringsAsFactors = FALSE
     )
     idx <- idx + 1
   }
 }
 
-bf_table <- do.call(rbind, results)
+replication_table <- do.call(rbind, results)
 
 cat("Pairwise replication analysis (blocks 1.1 and 2.1):\n\n")
-cat("BFr (Verhagen & Wagenmakers): < 1 = replication success\n")
-cat("BFs (Pawel & Held, sceptical): < 1 = replication success\n")
-print(bf_table, row.names = FALSE)
+print(replication_table, row.names = FALSE)
 
-write.csv(bf_table, file.path(out_dir, "replication_bf.csv"), row.names = FALSE)
-
-# ── Posterior plots ──────────────────────────────────────────────────────────
-
-for (blk in blocks) {
-  df_a_blk <- df_a[df_a$block == blk, ]
-  df_b_blk <- df_b[df_b$block == blk, ]
-
-  for (i in seq_len(ncol(pairs))) {
-    c1 <- pairs[1, i]
-    c2 <- pairs[2, i]
-
-    x1_a <- df_a_blk$delta_hr[df_a_blk$Cluster == c1]
-    x2_a <- df_a_blk$delta_hr[df_a_blk$Cluster == c2]
-    to <- mean(x2_a) - mean(x1_a)
-    so <- sqrt(var(x2_a) / length(x2_a) + var(x1_a) / length(x1_a))
-
-    x1_b <- df_b_blk$delta_hr[df_b_blk$Cluster == c1]
-    x2_b <- df_b_blk$delta_hr[df_b_blk$Cluster == c2]
-    tr <- mean(x2_b) - mean(x1_b)
-    sr <- sqrt(var(x2_b) / length(x2_b) + var(x1_b) / length(x1_b))
-
-    fname <- gsub(" ", "_", tolower(paste0("block", blk, "_", c2, "_vs_", c1)))
-    png(
-      file.path(out_dir, paste0("posterior_", fname, ".png")),
-      width = 6,
-      height = 4,
-      units = "in",
-      res = 300
-    )
-    repPosterior(to = to, so = so, tr = tr, sr = sr)
-    title(main = paste0(c2, " - ", c1, " (block ", blk, ")"))
-    dev.off()
-  }
-}
+write.csv(
+  replication_table,
+  file.path(out_dir, "replication_effects.csv"),
+  row.names = FALSE
+)
 
 cat("\nDone. Outputs saved to", out_dir, "\n")
