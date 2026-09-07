@@ -1,71 +1,80 @@
 # Bravura
 
-Analysis code for *"Bravura, a virtual reality-based paradigm for the study of physical aggression"*. Under prep.
+Repository for _Bravura, a virtual reality-based paradigm for the study of
+physical aggression_, under review, 2026.
+
+Bravura is a VR-based buzz-wire competitive task where participants
+choose to shock or not shock fictitious opponents across 30 trials. A
+variational Bayesian model estimates aggression coefficients from trial-by-trial
+decisions. k-means clustering on behavioural features identifies three subtypes
+(non-aggressive, reactive, proactive), validated against the PSAP, heart rate
+physiology, and an independent replication cohort.
 
 ## Installation
 
-### Python + R
+### Prerequisites
+
+- [pixi](https://pixi.sh) (conda-based package manager)
+- MATLAB R2025b (for computational modelling and physiology extraction only)
+
+### Dependencies
 
 ```bash
-pixi install
-pixi run post_install
+pixi install              # Python + R dependencies
+pixi run post_install     # brms (installed from CRAN)
+git submodule update --init --recursive  # MATLAB toolboxes
 ```
 
-### MATLAB (VBA toolbox)
+### MATLAB toolboxes
 
-```bash
-git submodule add https://github.com/MBB-team/VBA-toolbox.git extern/VBA-toolbox
-git submodule update --init
-```
+Four external toolboxes are tracked as git submodules in `extern/`:
+
+| Submodule | Purpose |
+| --------- | ------- |
+| [VBA-toolbox](https://github.com/MBB-team/VBA-toolbox) | Variational Bayesian Analysis (model fitting, BMA) |
+| [PhysioNet-Cardiovascular-Signal-Toolbox](https://github.com/Neclow/PhysioNet-Cardiovascular-Signal-Toolbox) | HRV analysis (`bravura` branch) |
+| [MarcusVollmer-HRV](https://github.com/MarcusVollmer/HRV) | HRV toolbox |
+| [ledalab](https://github.com/ledalab/ledalab) | EDA decomposition (Ledalab) |
+
+Add them to the MATLAB path before running any pipeline scripts:
 
 ```matlab
 addpath(genpath('src/vba'))
-addpath(genpath('extern/VBA-toolbox'))
+addpath(genpath('extern/VBA-toolbox-master'))
+addpath(genpath('extern/PhysioNet-Cardiovascular-Signal-Toolbox'))
+addpath(genpath('extern/MarcusVollmer-HRV'))
+addpath(genpath('extern/ledalab'))
 ```
 
-## VBA model fitting
+## Usage
 
-Requires MATLAB with the VBA toolbox. Run from the repo root:
+See [docs/](docs) for detailed instructions for each pipeline stage. The
+pipeline runs in six stages:
 
-```matlab
-grid_search('a')    % Fit all prior combinations for Cohort A
-bma('a')            % Bayesian Model Averaging
-export('a')         % Export to data/cohort_a/
-grid_search('b')    % Repeat for Cohort B
-bma('b')
-export('b')
-```
+1. **Computational modelling** — VBA grid search, Bayesian model averaging,
+   simulation recovery (MATLAB)
+2. **Clustering** — k-means consensus clustering on behavioural features,
+   sensitivity analyses
+3. **Behavioural preparation** — reshape shock, PSAP, and latency data for
+   modelling
+4. **Physiology preparation** — baseline HR, delta HR, HRV components,
+   multivariate physio, hormones
+5. **Bayesian models** — brms regression models (shocks, PSAP, delta HR,
+   latency, cardiac, replication)
+6. **Plots** — publication figures
 
-## Analysis
+The `data_v2/` directory has its own [README](data_v2/README.md) describing all
+data files and their provenance.
 
-### Notebooks
+## Citation
 
-Run in order: `fig1` → `fig2` → `fig3`. Each notebook generates figures to `img/`.
+If you use this code, please cite:
 
-| Notebook | Description |
-|----------|-------------|
-| `fig1.ipynb` | Paradigm, model fit, provocation effect, identifiability |
-| `fig2.ipynb` | Clustering, PSAP validation, Cohort B replication, shock latency |
-| `fig3.ipynb` | HR time course, delta-HR by cluster × block, baseline HR, Cohort B replication, cardiac multivariate model |
-
-### Bayesian modelling
-
-All models are fit with [brms](https://paul-buerkner.github.io/brms/) and cached under `data/brms/`. Each script saves fixed effects, Bayes factors, posterior predictions, and diagnostics.
-
-```bash
-# Behavioural
-pixi run brms_shocks            # Shocks ~ Cluster * opponent (binomial)
-pixi run brms_shocks_overview   # Opponent provocation effect (binomial)
-pixi run brms_psap              # PSAP validation (Dirichlet)
-pixi run brms_latency           # Shock latency ~ Cluster * opponent (lognormal)
-pixi run brms_trial_duration    # Trial duration by decision type (Student-t)
-
-# Physiological
-pixi run brms_delta_hr          # Delta-HR ~ Cluster * block (Student-t RI)
-pixi run brms_baseline_hr       # Baseline HR by cluster (expected null)
-pixi run brms_physio_cardiac    # Multivariate cardiac: HR + HRV RC1-3 (Student-t)
-pixi run brms_physio_mv         # 6-DV model: HR, HRV, respiration, EDA (Student-t)
-
-# Replication
-pixi run brms_delta_hr_rep      # Sceptical Bayes factors via BayesRep
+```bibtex
+@article{scheidwasser2026bravura,
+  title   = {Bravura, a virtual reality-based paradigm for the study of physical aggression},
+  author  = {Scheidwasser, Neil and Rodrigues, Jo{\~a}o and Sandi, Carmen},
+  year    = {2026},
+  note    = {Under review}
+}
 ```

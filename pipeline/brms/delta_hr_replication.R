@@ -1,17 +1,18 @@
 library(BayesRep)
+source("src/brms/utils.R")
 
 # ── Setup ────────────────────────────────────────────────────────────────────
 # Replication analysis for Δ₁HR using BayesRep (Pawel & Held, 2022).
 # Effect estimates: pairwise mean differences + Welch SEs from raw data.
 # Computed on blocks 1.1 and 2.1 (where Cohort A brms showed strong effects).
 
-out_dir <- "data/brms/delta_hr_replication"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr_replication")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Load data ────────────────────────────────────────────────────────────────
 
-df_a <- read.csv("data/processed/delta_hr_long.csv")
-df_b <- read.csv("data/processed/delta_hr_long_b.csv")
+df_a <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long.csv"))
+df_b <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long_b.csv"))
 
 cat("Cohort A:", length(unique(df_a$subject)), "subjects\n")
 cat("Cohort B:", length(unique(df_b$subject)), "subjects\n\n")

@@ -7,12 +7,12 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/baseline_hr"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "baseline_hr")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Load data ────────────────────────────────────────────────────────────────
 
-df <- read.csv("data/processed/baseline_hr.csv")
+df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "baseline_hr.csv"))
 df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
 
 cat("N:", nrow(df), "\n")

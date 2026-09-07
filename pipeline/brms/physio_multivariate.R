@@ -9,12 +9,12 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/physio_multivariate"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "physio_multivariate")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Load data ────────────────────────────────────────────────────────────────
 
-df <- read.csv("data/processed/physio_multivariate_long.csv")
+df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "physio_multivariate_long.csv"))
 
 df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
 df$block <- factor(df$block, levels = c("1.1", "1.2", "2.1", "2.2"))

@@ -7,6 +7,10 @@ library(bayestestR)
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
+DEFAULT_DATA_DIR <- "data_v2"
+DEFAULT_BRMS_DIR <- file.path(DEFAULT_DATA_DIR, "brms")
+DEFAULT_PROCESSED_DIR <- file.path(DEFAULT_DATA_DIR, "processed")
+
 SEED <- 42
 CHAINS <- 4
 CORES <- 4

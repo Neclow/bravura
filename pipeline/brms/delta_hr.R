@@ -5,39 +5,43 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/shocks"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-df <- read.csv("data/processed/shock_long.csv")
+df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long.csv"))
+
+df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
+df$block <- factor(df$block, levels = c("1.1", "1.2", "2.1", "2.2"))
+df$subject <- factor(df$subject)
+
+cat("Design:\n")
+cat("  Subjects:", nlevels(df$subject), "\n")
+cat("  Clusters:", levels(df$Cluster), "\n")
+cat("  Blocks:", levels(df$block), "\n")
+cat("  Observations:", nrow(df), "\n\n")
 
 # ── Formulas ─────────────────────────────────────────────────────────────────
+# Mixed ANOVA equivalent: Cluster (between) × block (within) + random intercepts
 
-formula_ri <- shocks | trials(15) ~ Cluster * opponent + (1 | subject)
-formula_rs <- shocks | trials(15) ~ Cluster * opponent + (1 + opponent | subject)
+formula_ri <- delta_hr ~ Cluster * block + (1 | subject)
+formula_rs <- delta_hr ~ Cluster * block + (1 + block | subject)
 
 # ── Priors ───────────────────────────────────────────────────────────────────
-# Intercept: logit scale, N(0, 2) centres on 50% with broad coverage
-# Slopes: N(0, 1) weakly informative on logit scale
-# SD: half-normal, weakly informative
+# Delta HR is in bpm; typical changes are ~5-10 bpm from baseline
 
-priors_binomial <- c(
-  prior(normal(0, 2), class = "Intercept"),
-  prior(normal(0, 1), class = "b"),
-  prior(normal(0, 1.5), class = "sd")
+informed_priors <- c(
+  prior(normal(5, 5), class = "Intercept"),
+  prior(normal(0, 5), class = "b"),
+  prior(student_t(3, 0, 5), class = "sd"),
+  prior(student_t(3, 0, 10), class = "sigma")
 )
 
-priors_binomial_rs <- c(
-  prior(normal(0, 2), class = "Intercept"),
-  prior(normal(0, 1), class = "b"),
-  prior(normal(0, 1.5), class = "sd"),
+informed_priors_rs <- c(
+  prior(normal(5, 5), class = "Intercept"),
+  prior(normal(0, 5), class = "b"),
+  prior(student_t(3, 0, 5), class = "sd"),
+  prior(student_t(3, 0, 10), class = "sigma"),
   prior(lkj(2), class = "cor")
-)
-
-priors_betabinomial <- c(
-  prior(normal(0, 2), class = "Intercept"),
-  prior(normal(0, 1), class = "b"),
-  prior(normal(0, 1.5), class = "sd"),
-  prior(gamma(1, 0.1), class = "phi")
 )
 
 # ── Model registry ──────────────────────────────────────────────────────────
@@ -45,38 +49,42 @@ priors_betabinomial <- c(
 common <- list(
   data = df,
   chains = CHAINS,
-  iter = ITER,
-  warmup = WARMUP,
-  seed = SEED
+  cores = CORES,
+  iter = 8000,
+  warmup = 4000,
+  seed = SEED,
+  control = list(adapt_delta = 0.99, max_treedepth = 15)
 )
 
 models <- list(
   list(
-    name = "fit_binomial",
-    label = "binomial RI",
+    name = "fit_gaussian_ri",
+    label = "gaussian RI (informed)",
     formula = formula_ri,
-    family = binomial(),
-    prior = priors_binomial
+    family = gaussian(),
+    prior = informed_priors
+  ),
+  # RS model commented out: overparameterized (4 obs/subject for 4 random
+  # effects + correlation matrix), fails to converge. Student-t RI selected.
+  # list(
+  #   name = "fit_gaussian_rs",
+  #   label = "gaussian RS (informed)",
+  #   formula = formula_rs,
+  #   family = gaussian(),
+  #   prior = informed_priors_rs
+  # ),
+  list(
+    name = "fit_student_ri",
+    label = "student-t RI (informed)",
+    formula = formula_ri,
+    family = student(),
+    prior = informed_priors
   ),
   list(
-    name = "fit_binomial_rs",
-    label = "binomial RS",
-    formula = formula_rs,
-    family = binomial(),
-    prior = priors_binomial_rs
-  ),
-  list(
-    name = "fit_betabinomial",
-    label = "beta-binomial RI",
+    name = "fit_gaussian_ri_default",
+    label = "gaussian RI (default)",
     formula = formula_ri,
-    family = beta_binomial(),
-    prior = priors_betabinomial
-  ),
-  list(
-    name = "fit_betabinomial_default",
-    label = "beta-binomial RI (default priors)",
-    formula = formula_ri,
-    family = beta_binomial(),
+    family = gaussian(),
     prior = NULL
   )
 )
@@ -119,12 +127,17 @@ for (m in models) {
 }
 sink()
 
-# ── Select best model ──────────────────────────────────────────────────────
+# ── Select best model ───────────────────────────────────────────────────────
+# RS wins LOO but fails to converge (divergences, Rhat > 1.05) because
+# 4 obs/subject cannot support 4 random effects + correlation matrix.
+# Student-t RI is second-best by LOO (~70 elpd ahead of Gaussian RI),
+# converges cleanly, and is robust to HR outliers while preserving the
+# compound-symmetry structure (direct Bayesian mixed ANOVA analogue).
 
-best_name <- rownames(comp_loo)[1]
+best_name <- "fit_student_ri"
 best <- fits[[best_name]]
 best_label <- label_map[best_name]
-cat("Best model (LOO):", best_label, "\n")
+cat("Selected model:", best_label, "\n")
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
@@ -134,7 +147,7 @@ fit_prior <- fit_or_load(
   formula = formula(best),
   data = df,
   family = family(best),
-  prior = priors_binomial,
+  prior = informed_priors,
   sample_prior = "only",
   chains = CHAINS,
   iter = 12000,
@@ -162,34 +175,30 @@ write.csv(
   as.data.frame(ranef(best)$subject),
   file.path(out_dir, "random_effects.csv")
 )
-write.csv(
-  as.data.frame(as_draws_df(best)),
-  file.path(out_dir, "posterior_draws.csv")
-)
 
 # Posterior predicted draws per cell (tidybayes, response scale)
 newdata <- expand.grid(
-  Cluster = unique(df$Cluster),
-  opponent = unique(df$opponent)
+  Cluster = levels(df$Cluster),
+  block = levels(df$block)
 )
 
-ppe_long <- newdata %>%
+epred_long <- newdata %>%
   add_epred_draws(best, re_formula = NA) %>%
-  rename(shocks = .epred) %>%
-  select(Cluster, opponent, shocks, .draw)
+  rename(delta_hr = .epred) %>%
+  select(Cluster, block, delta_hr, .draw)
 
 write.csv(
-  ppe_long,
+  epred_long,
   file.path(out_dir, "posterior_epred.csv"),
   row.names = FALSE
 )
 
-pred_summary <- ppe_long %>%
-  group_by(Cluster, opponent) %>%
+pred_summary <- epred_long %>%
+  group_by(Cluster, block) %>%
   summarise(
-    mean = mean(shocks),
-    Q2.5 = quantile(shocks, 0.025),
-    Q97.5 = quantile(shocks, 0.975),
+    mean = mean(delta_hr),
+    Q2.5 = quantile(delta_hr, 0.025),
+    Q97.5 = quantile(delta_hr, 0.975),
     .groups = "drop"
   )
 write.csv(
@@ -200,10 +209,8 @@ write.csv(
 
 # ── Pairwise contrasts with Bayes Factors (Savage-Dickey) ────────────────────
 
-em_posterior <- emmeans(best, pairwise ~ Cluster | opponent)
-em_prior <- emmeans(fit_prior, pairwise ~ Cluster | opponent)
-
-bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
+em_posterior <- emmeans(best, pairwise ~ Cluster | block)
+em_prior <- emmeans(fit_prior, pairwise ~ Cluster | block)
 
 bf_results <- bf_table(em_posterior, em_prior)
 

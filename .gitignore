@@ -129,8 +129,7 @@ dmypy.json
 .pyre/
 
 # pixi environments
-.pixi/*
-!.pixi/config.toml
+.pixi/
 
 # My notes
 notes/
@@ -146,6 +145,7 @@ archive/
 bib/
 tex/
 output/
+manuscript/
 
 # Old code
 dev/
@@ -157,3 +157,4 @@ CLAUDE.md
 
 # Images (temporary)
 img/
+img_v2/

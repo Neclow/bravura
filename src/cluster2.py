@@ -9,11 +9,24 @@ from matplotlib.patches import Ellipse
 from scipy.optimize import linear_sum_assignment
 from scipy.spatial.distance import pdist
 from sklearn.base import ClusterMixin
-from sklearn.cluster import KMeans
+from sklearn.cluster import AgglomerativeClustering, KMeans
 from sklearn.metrics import pairwise_distances_argmin, silhouette_score
 from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
 from tqdm.auto import tqdm
+
+from src._config import DEFAULT_PROCESSED_DIR
+
+
+class AgglomerativeClusteringWrapper(AgglomerativeClustering):
+    """
+    Wrapper to make AgglomerativeClustering
+    use `random_state` for consistency with other clusterers.
+    """
+
+    def __init__(self, random_state, **kwargs):
+        super().__init__(**kwargs)
+        self.random_state = random_state
 
 
 class GaussianMixtureWrapper(GaussianMixture):
@@ -75,7 +88,7 @@ CLUSTERERS = {
     "k-means": partial(KMeans, n_init=10),
     "k-medoids": partial(KMedoidsWrapper, method="fasterpam", metric="euclidean"),
     "gmm": partial(GaussianMixtureWrapper, n_init=10),
-    # "hac": partial(AgglomerativeClusteringWrapper, linkage="ward"),
+    "hac": partial(AgglomerativeClusteringWrapper, linkage="ward", metric="euclidean"),
     # "spectral": partial(SpectralClustering, affinity="rbf"),
 }
 
@@ -151,7 +164,7 @@ def fuzzy_fit_predict(
 
     if save:
         np.savez_compressed(
-            f"data/processed/mc_consensus_{solver}_{k}.npz",
+            f"{DEFAULT_PROCESSED_DIR}/mc_consensus_{solver}_{k}.npz",
             label_counts_a=label_counts_a,
             label_counts_b=label_counts_b,
             consensus_a=consensus_a,
@@ -227,18 +240,26 @@ def ablate_k(X, solver, k_range, random_state, **kwargs):
 
 def ablate_solver(X, solvers, k, random_state):
     results = {}
+    sils = []
     for solver in solvers:
         res = fit_predict(X, solver, k, random_state)
         results[solver] = res
-    return pd.DataFrame.from_dict(results, orient="index")
+        sils.append(silhouette_score(X, res.labels, random_state=random_state))
+    df = pd.DataFrame.from_dict(results, orient="index")
+    df["silhouette"] = sils
+    return df
 
 
 def ablate_X(Xs, solver, k, random_state):
     results = {}
+    sils = []
     for name, X in Xs.items():
         res = fit_predict(X, solver, k, random_state)
         results[name] = res
-    return pd.DataFrame.from_dict(results, orient="index")
+        sils.append(silhouette_score(X, res.labels, random_state=random_state))
+    df = pd.DataFrame.from_dict(results, orient="index")
+    df["silhouette"] = sils
+    return df
 
 
 def _match_labels(labels_mc, labels_ref, k):

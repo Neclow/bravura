@@ -1,7 +1,10 @@
 from typing import Final
 
 # Figure directory
-IMG_DIR: Final = "img"
+DEFAULT_DATA_DIR: Final = "data_v2"
+DEFAULT_BRMS_DIR: Final = f"{DEFAULT_DATA_DIR}/brms"
+DEFAULT_PROCESSED_DIR: Final = f"{DEFAULT_DATA_DIR}/processed"
+DEFAULT_SHARED_DIR: Final = f"{DEFAULT_DATA_DIR}/shared"
 
 # Trial hyperparameters
 N_OPPONENTS: Final = 2  # Number of virtual opponents
@@ -40,18 +43,24 @@ DEFAULT_CLUSTERING_FEATURES = [
     "shock_opp1",
     "shock_opp2",
     "first_shock",
-    "belief_opp1",
-    "belief_opp2",
 ]
+FEATURE_LABELS = {
+    "Kp": r"$K_p$",
+    "Kr1": r"$K_{r_1}$",
+    "Krc": r"$K_{r_c}$",
+    "Kwc": r"$K_{w_c}$",
+    "R2": r"$R^2$",
+    "shock_opp1": "Shocks(Opp. 1)",
+    "shock_opp2": "Shocks(Opp. 2)",
+    "first_shock": "1st shock",
+}
 
 # Clusters
-# In _config.py or at the top of fig3:
 CLUSTERS = [
-    {"label": 2, "name": "Non-aggressive"},
-    {"label": 1, "name": "Proactive"},
-    {"label": 0, "name": "Reactive"},
+    {"label": 1, "name": "Non-aggressive", "annot_xy": (-3, -3.5)},
+    {"label": 2, "name": "Proactive", "annot_xy": (2, -3.25)},
+    {"label": 0, "name": "Reactive", "annot_xy": (-1.5, 4)},
 ]
-
-PALETTE = {0: "#de8f05", 1: "#029e73", 2: "#0173b2"}
-
+PALETTE = {0: "#de8f05", 1: "#0173b2", 2: "#029e73"}
 CLUSTER_NAMES = {cl["label"]: cl["name"] for cl in CLUSTERS}
+CLUSTER_PALETTE = {cl["name"]: PALETTE[cl["label"]] for cl in CLUSTERS}

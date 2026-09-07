@@ -1,15 +1,16 @@
 [project]
 name = "bravura"
 version = "0.1.0"
-authors = ["Neclow <neilclow24@gmail.com>"]
+authors = ["Neclow <neil.clow@sund.ku.dk>"]
 channels = ["conda-forge"]
 platforms = ["linux-64"]
 
 [dependencies]
 python = "3.12.*"
+ipykernel = ">=7.2.0,<8"
+ipywidgets = ">=8.1.8,<9"
 matplotlib = "*"
 seaborn = "*"
-ipykernel = ">=7.2.0,<8"
 pandas = ">=3.0.2,<4"
 openpyxl = ">=3.1.5,<4"
 scipy = ">=1.17.1,<2"
@@ -25,31 +26,39 @@ r-bayestestr = ">=0.17.0,<0.18"
 r-logspline = ">=2.1.22,<3"
 r-bayesfactor = ">=0.9.12_4.8,<0.10"
 r-report = ">=0.6.3,<0.7"
-ipywidgets = ">=8.1.8,<9"
 
 [tasks]
 post_install = "bash scripts/post_install.sh"
-brms_shocks = { cmd = "Rscript src/brms/shocks.R", description = "Fit brms shock models (binomial, beta-binomial, K-fold CV)" }
-brms_psap = { cmd = "Rscript src/brms/psap.R", description = "Fit brms PSAP models (Gaussian, Beta, zero-inflated Beta)" }
-brms_delta_hr = { cmd = "Rscript src/brms/delta_hr.R", description = "Fit brms delta-HR models (Cluster x block, Gaussian/Student-t)" }
-brms_delta_hr_rep = { cmd = "Rscript src/brms/delta_hr_replication.R", description = "Replication analysis: Cohort B with Cohort A-informed priors" }
-brms_physio_mv = { cmd = "Rscript src/brms/physio_multivariate.R", description = "Multivariate physio model (HR, HRV, Resp, EDA × Cluster × block)" }
-brms_physio_cardiac = { cmd = "Rscript src/brms/physio_cardiac.R", description = "Cardiac model (HR + HRV PC1/PC2 × Cluster × block)" }
-brms_latency = { cmd = "Rscript src/brms/latency.R", description = "Shock latency model (lognormal, Cluster × opponent)" }
-brms_baseline_hr = { cmd = "Rscript src/brms/baseline_hr.R", description = "Test baseline HR by cluster (expected: no difference)" }
-brms_shocks_overview = { cmd = "Rscript src/brms/shocks_overview.R", description = "Opponent provocation effect (binomial, opponent × cohort)" }
-brms_trial_duration = { cmd = "Rscript src/brms/trial_duration.R", description = "Trial duration by decision type (Student-t, decision × cohort)" }
+brms_baseline_hr = "Rscript pipeline/brms/baseline_hr.R"
+brms_beliefs_overview = "Rscript pipeline/brms/beliefs_overview.R"
+brms_delta_hr = "Rscript pipeline/brms/delta_hr.R"
+brms_delta_hr_rep = "Rscript pipeline/brms/delta_hr_replication.R"
+brms_hormones = "Rscript pipeline/brms/hormones.R"
+brms_latency = "Rscript pipeline/brms/latency.R"
+brms_physio_cardiac = "Rscript pipeline/brms/physio_cardiac.R"
+brms_physio_mv = "Rscript pipeline/brms/physio_multivariate.R"
+brms_psap = "Rscript pipeline/brms/psap.R"
+brms_shocks = "Rscript pipeline/brms/shocks.R"
+brms_shocks_overview = "Rscript pipeline/brms/shocks_overview.R"
+brms_trial_duration = "Rscript pipeline/brms/trial_duration.R"
+cluster_behavior = "python -m pipeline.cluster_behavior"
+cluster_behaviour = "python -m pipeline.cluster_behavior"
+prepare_behavior = "python -m pipeline.prepare_behavior"
+prepare_physio = "python -m pipeline.prepare_physio"
+fig2_belief = "python -m plots.fig2_belief"
+fig2_shocks_given = "python -m plots.fig2_shocks_given"
+fig2_trial_duration = "python -m plots.fig2_trial_duration"
+fig3_decision_modelling = "python -m plots.fig3_decision_modelling"
+fig3_pca = "python -m plots.fig3_pca"
+fig3_psap = "python -m plots.fig3_psap"
+fig3_radar = "python -m plots.fig3_radar"
+fig3_shock_per_cluster = "python -m plots.fig3_shock_per_cluster"
+fig4_hr_baseline = "python -m plots.fig4_hr_baseline"
+fig4_hr_delta = "python -m plots.fig4_hr_delta"
+figS1_participants = "python -m plots.figS1_participants"
+figS4_cluster_analysis = "python -m plots.figS4_cluster_analysis"
+figS5_latency = "python -m plots.figS5_latency"
+figS8_cardiac = "python -m plots.figS8_cardiac"
 
 [pypi-dependencies]
 statannotations = ">=0.7.2, <0.8"
-
-[environments]
-dev = ["dev"]
-
-[feature.dev.dependencies]
-pandoc = ">=3"
-
-[feature.dev.tasks]
-docx = { cmd = "cd tex && pandoc draft_working.md --citeproc --bibliography=References.bib -o ../output/bravura_revised.docx", description = "Generate .docx from draft_working.md" }
-pdf = { cmd = "cd tex && pandoc draft_working.md --citeproc --bibliography=References.bib --pdf-engine=xelatex -V geometry:margin=1in -o ../output/bravura_revised.pdf", description = "Generate .pdf from draft_working.md" }
-tex = { cmd = "cd tex && pandoc draft_working.md --citeproc --bibliography=References.bib -o ../output/bravura_revised.tex", description = "Generate .tex from draft_working.md" }

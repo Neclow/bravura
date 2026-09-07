@@ -8,7 +8,7 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/beliefs_overview"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "beliefs_overview")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Data preparation ─────────────────────────────────────────────────────────
@@ -24,8 +24,8 @@ load_beliefs <- function(path, cohort_label) {
 }
 
 df <- rbind(
-  load_beliefs("data/processed/behav_Xa.csv", "A"),
-  load_beliefs("data/processed/behav_Xb.csv", "B")
+  load_beliefs(file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"), "A"),
+  load_beliefs(file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"), "B")
 )
 df$cohort <- factor(df$cohort)
 
