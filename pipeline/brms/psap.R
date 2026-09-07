@@ -5,11 +5,11 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/psap"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "psap")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # psap_ilr.csv has noise-replaced zeros and renormalized proportions
-df <- read.csv("data/processed/psap_ilr.csv")
+df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "psap_ilr.csv"))
 
 # ── Model ────────────────────────────────────────────────────────────────────
 

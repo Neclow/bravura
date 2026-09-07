@@ -8,12 +8,12 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/latency"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "latency")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Load data ────────────────────────────────────────────────────────────────
 
-df <- read.csv("data/processed/shock_latency_long.csv")
+df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_latency_long.csv"))
 
 df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
 df$opponent <- factor(df$opponent)

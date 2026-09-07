@@ -5,17 +5,17 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-out_dir <- "data/brms/trial_duration"
+out_dir <- file.path(DEFAULT_BRMS_DIR, "trial_duration")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # ── Data preparation ─────────────────────────────────────────────────────────
 
 # Load trial-level data (both cohorts)
-trials <- read.csv("data/shared/trial_events.csv")
+trials <- read.csv(file.path(DEFAULT_DATA_DIR, "shared", "trial_events.csv"))
 
 # Get included subjects from behav_Xa (N=114) and behav_Xb (N=37)
-included_a <- rownames(read.csv("data/processed/behav_Xa.csv", row.names = 1))
-included_b <- rownames(read.csv("data/processed/behav_Xb.csv", row.names = 1))
+included_a <- rownames(read.csv(file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"), row.names = 1))
+included_b <- rownames(read.csv(file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"), row.names = 1))
 included <- c(included_a, included_b)
 trials <- trials %>% filter(subject %in% included)
 trials$cohort <- factor(trials$cohort)
