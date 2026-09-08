@@ -151,6 +151,10 @@ manuscript/
 dev/
 old/
 
+# Scripts (local-only)
+scripts/*
+!scripts/post_install.sh
+
 # Claude stuff
 .claude
 CLAUDE.md
