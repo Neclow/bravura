@@ -24,10 +24,10 @@ and trace plots.
 
 Every brms script saves at least:
 
-- `posterior_epred.csv` — posterior expected predictions (used by plot scripts)
-- `predicted_means.csv` — posterior predicted means per condition
-- `bayes_factors.csv` — Savage-Dickey or pairwise BFs
-- `summary.txt` — model summary
+- `posterior_epred.csv`: posterior expected predictions (used by plot scripts)
+- `predicted_means.csv`: posterior predicted means per condition
+- `bayes_factors.csv`: Savage-Dickey or pairwise BFs
+- `summary.txt`: model summary
 
 See the [data README](../data_v2/README.md#brms) for the full output listing.
 
@@ -44,7 +44,6 @@ See the [data README](../data_v2/README.md#brms) for the full output listing.
 | `pixi run brms_delta_hr_rep` | `delta_hr_replication.R` | `delta_hr_long.csv`, `delta_hr_long_b.csv` | N/A (BayesRep) | N/A |
 | `pixi run brms_latency` | `latency.R` | `shock_latency_long.csv` | `latency ~ Cluster * opponent + (1 \| subject)` | lognormal |
 | `pixi run brms_physio_cardiac` | `physio_cardiac.R` | `physio_cardiac_long.csv` | `mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~ Cluster * block + (1 \|p\| subject)` | student |
-| `pixi run brms_physio_mv` | `physio_multivariate.R` | `physio_multivariate_long.csv` | `mvbind(HR, HRV_PC1, RespRate, Resp_PC1, nSCRcda, EDA_PC1) ~ Cluster * block + (1 \|p\| subject)` | student |
 | `pixi run brms_trial_duration` | `trial_duration.R` | `trial_events.csv` | `duration ~ decision * cohort + (1 \| subject)` | student |
 | `pixi run brms_hormones` | `hormones.R` | `hormones.csv` | `{var} ~ Cluster + Condition` | student |
 
@@ -72,11 +71,11 @@ replication Bayes factors (BFr) and sceptical Bayes factors (BFs) from
 Cohort A and B effect sizes. Focuses on blocks 1.1 and 2.1 where Cohort A
 showed strong effects. BFr < 1 = replication success.
 
-### physio_cardiac.R / physio_multivariate.R
+### physio_cardiac.R
 
-Multivariate models (4 and 6 DVs respectively) with `set_rescor(TRUE)` to
-estimate residual correlations. Shared correlation structure across random
-effects via `|p|` syntax. Uses 8000 iterations / 4000 warmup.
+Multivariate model (4 DVs) with `set_rescor(TRUE)` to estimate residual
+correlations. Shared correlation structure across random effects via `|p|`
+syntax. Uses 8000 iterations / 4000 warmup.
 
 ### psap.R
 

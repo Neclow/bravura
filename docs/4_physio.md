@@ -60,21 +60,7 @@ Delta scores are computed as task-block minus Pre for each component.
 - **Consumed by:** `brms_physio_cardiac`
 - **Note:** Cohort A only.
 
-## Phase 4: Physio multivariate
-
-Six physiological DVs: one representative feature plus one PC1 composite per
-domain (cardiac, respiratory, electrodermal). Three separate 1-component PCAs
-are fit on HRV, respiration, and EDA features respectively. Delta scores
-computed as task minus Pre.
-
-- **Outputs:** `data_v2/processed/physio_multivariate_long.csv`
-- **Columns:** `subject`, `Cluster`, `block`, `HR`, `HRV_PC1`, `RespRate`,
-  `Resp_PC1`, `nSCRcda`, `EDA_PC1`
-- **Consumed by:** `brms_physio_mv`
-- **Note:** Cohort A only. Subjects with incomplete respiratory/EDA data are
-  additionally dropped.
-
-## Phase 5: Hormones
+## Phase 4: Hormones
 
 Salivary cortisol and testosterone by cluster. Computes mean cortisol, mean
 testosterone, T:C ratio (testosterone converted pg/ml to ug/dl), and

@@ -8,6 +8,3 @@
 	path = extern/PhysioNet-Cardiovascular-Signal-Toolbox
 	url = https://github.com/Neclow/PhysioNet-Cardiovascular-Signal-Toolbox.git
 	branch = bravura
-[submodule "extern/ledalab"]
-	path = extern/ledalab
-	url = https://github.com/ledalab/ledalab.git

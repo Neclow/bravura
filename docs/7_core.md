@@ -93,7 +93,6 @@ Shared helpers for brms scripts. See [5_brms.md](5_brms.md) for usage.
 | ---- | ----------- |
 | `My_Main_HRV_Analysis.m` | HRV analysis (PhysioNet Cardiovascular Signal Toolbox) |
 | `My_InitializeHRVparams.m` | HRV parameter initialisation |
-| `RespirationParameters3.m` | Respiration feature extraction (peak detection, breathing rate) |
 
 ### `src/psap/`
 

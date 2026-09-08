@@ -7,10 +7,7 @@ Phase 2 — Delta HR:
     delta_hr_long_b.csv.
 Phase 3 — Cardiac multivariate:
     Delta HR + varimax-rotated HRV RC1-3 → physio_cardiac_long.csv.
-Phase 4 — Physio multivariate:
-    Delta HR + HRV PC1 + RespRate + Resp PC1 + nSCRcda + EDA PC1
-    → physio_multivariate_long.csv.
-Phase 5 — Hormones:
+Phase 4 — Hormones:
     Cortisol + testosterone by cluster → hormones.csv (Cohort A only).
 """
 
@@ -50,9 +47,6 @@ HRV_FEATS = [
     "TINN",
     "TRI",
 ]
-RESP_FEATS = ["RespRate", "RespWidth", "RespDepth", "RespRatio"]
-EDA_FEATS = ["nSCRcda", "Toniccda", "nSCRttp", "AmpSumttp"]
-
 # Block structure
 
 ALL_BLOCKS = ["Pre", "Op1T1", "Op1T2", "Op2T1", "Op2T2"]
@@ -281,80 +275,7 @@ def export_cardiac(physio, labels, out_dir):
     print()
 
 
-# Phase 4: Physio multivariate
-
-
-def export_multivariate(physio, labels, out_dir):
-    """Export full multivariate physio: HR + HRV PC1 + RespRate + Resp PC1 +
-    nSCRcda + EDA PC1.
-    """
-    avail_hrv = _available_feats(physio, HRV_FEATS)
-    avail_resp = _available_feats(physio, RESP_FEATS)
-    avail_eda = _available_feats(physio, EDA_FEATS)
-
-    all_cols = (
-        [f"HR_{b}" for b in ALL_BLOCKS]
-        + [f"{f}_{b}" for f in avail_hrv for b in ALL_BLOCKS]
-        + [f"{f}_{b}" for f in avail_resp for b in ALL_BLOCKS]
-        + [f"{f}_{b}" for f in avail_eda for b in ALL_BLOCKS]
-    )
-    complete = physio[all_cols].dropna().index
-    n_dropped = len(physio) - len(complete)
-    if n_dropped:
-        print(f"  Dropped {n_dropped} subjects with incomplete resp/EDA data")
-    physio = physio.loc[complete]
-    labels = labels.loc[complete]
-
-    scaler_hrv, pca_hrv, pre_hrv = _pool_and_fit_pca(physio, avail_hrv, 1)
-    scaler_resp, pca_resp, pre_resp = _pool_and_fit_pca(physio, avail_resp, 1)
-    scaler_eda, pca_eda, pre_eda = _pool_and_fit_pca(physio, avail_eda, 1)
-
-    cluster_labels = labels.map(CLUSTER_NAMES)
-
-    rows = []
-    for subj in physio.index:
-        for blk, blk_label in zip(TASK_BLOCKS, TASK_BLOCK_LABELS):
-            rows.append(
-                {
-                    "subject": subj,
-                    "Cluster": cluster_labels[subj],
-                    "block": blk_label,
-                    "HR": physio.loc[subj, f"HR_{blk}"] - physio.loc[subj, "HR_Pre"],
-                }
-            )
-    df = pd.DataFrame(rows)
-
-    for blk, blk_label in zip(TASK_BLOCKS, TASK_BLOCK_LABELS):
-        mask = df["block"] == blk_label
-
-        delta_hrv = _block_delta_scores(
-            physio, avail_hrv, blk, scaler_hrv, pca_hrv, pre_hrv
-        )
-        df.loc[mask, "HRV_PC1"] = delta_hrv[:, 0]
-
-        df.loc[mask, "RespRate"] = (
-            physio[f"RespRate_{blk}"].values - physio["RespRate_Pre"].values
-        )
-        delta_resp = _block_delta_scores(
-            physio, avail_resp, blk, scaler_resp, pca_resp, pre_resp
-        )
-        df.loc[mask, "Resp_PC1"] = delta_resp[:, 0]
-
-        df.loc[mask, "nSCRcda"] = (
-            physio[f"nSCRcda_{blk}"].values - physio["nSCRcda_Pre"].values
-        )
-        delta_eda = _block_delta_scores(
-            physio, avail_eda, blk, scaler_eda, pca_eda, pre_eda
-        )
-        df.loc[mask, "EDA_PC1"] = delta_eda[:, 0]
-
-    path = f"{out_dir}/physio_multivariate_long.csv"
-    df.to_csv(path, index=False)
-    print(f"Saved {df.shape} to {path}")
-    print()
-
-
-# Phase 5: Hormones
+# Phase 4: Hormones
 
 
 def export_hormones(out_dir):
@@ -428,8 +349,5 @@ if __name__ == "__main__":
     print("=== Phase 3: Cardiac (HR + varimax HRV RC1-3) ===")
     export_cardiac(physio_a, labels_a, out)
 
-    print("=== Phase 4: Physio multivariate ===")
-    export_multivariate(physio_a, labels_a, out)
-
-    print("=== Phase 5: Hormones ===")
+    print("=== Phase 4: Hormones ===")
     export_hormones(out)
