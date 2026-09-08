@@ -36,8 +36,8 @@ dynamics).
 - **Requires:** All grid search outputs.
 - **Inputs:** `data_v2/cohort_{a,b}/vba_models/*.mat`
 - **Outputs:**
-  - `data_v2/cohort_{a,b}/vba_bma/bma_results.mat` — BMA group and summary results
-  - `data_v2/cohort_{a,b}/vba_bma/free_energy.mat` — Free energy matrix (subjects x models)
+  - `data_v2/cohort_{a,b}/vba_bma/bma_results.mat`: BMA group and summary results
+  - `data_v2/cohort_{a,b}/vba_bma/free_energy.mat`: Free energy matrix (subjects x models)
 
 Collects posteriors and free energies from all 256 models, passes them to
 `VBA_BMA` for evidence-weighted averaging per subject.
@@ -49,13 +49,13 @@ Collects posteriors and free energies from all 256 models, passes them to
 - **Requires:** BMA results.
 - **Inputs:** `data_v2/cohort_{a,b}/vba_bma/bma_results.mat`
 - **Outputs:**
-  - `coefficients.csv` — BMA-averaged [Kr1, Krc, Kp, Kwc] per subject
-  - `predictions.csv` — Predicted P(shock) per trial
-  - `decisions.csv` — Actual binary decisions
-  - `fit_metrics.csv` — R2, accuracy, balanced accuracy, log evidence
-  - `subject_ids.csv` — Subject IDs
-  - `free_energy_matrix.csv` — Free energies (subjects x models)
-  - `vba_posteriors.mat` — Posterior means (muPhi) and covariances (SigmaPhi)
+  - `coefficients.csv`: BMA-averaged [Kr1, Krc, Kp, Kwc] per subject
+  - `predictions.csv`: Predicted P(shock) per trial
+  - `decisions.csv`: Actual binary decisions
+  - `fit_metrics.csv`: R2, accuracy, balanced accuracy, log evidence
+  - `subject_ids.csv`: Subject IDs
+  - `free_energy_matrix.csv`: Free energies (subjects x models)
+  - `vba_posteriors.mat`: Posterior means (muPhi) and covariances (SigmaPhi)
 
 All outputs written to `data_v2/cohort_{a,b}/`.
 
@@ -65,8 +65,8 @@ All outputs written to `data_v2/cohort_{a,b}/`.
 - **Script:** `pipeline/vba/simulation_recovery.m`
 - **Requires:** `data_v2/cohort_{a,b}/vba_input.xlsx`
 - **Outputs:**
-  - `data_v2/cohort_{a,b}/cov_stats.mat` — Determinant and condition number per subject
-  - `data_v2/cohort_{a,b}/corr_preds.mat` — Recovered parameter correlation and covariance matrices
+  - `data_v2/cohort_{a,b}/cov_stats.mat`: Determinant and condition number per subject
+  - `data_v2/cohort_{a,b}/corr_preds.mat`: Recovered parameter correlation and covariance matrices
 
 For each subject, simulates 30 synthetic datasets with known parameters
 (drawn from N(0, 3.75^2)), re-fits the model, and checks whether parameters

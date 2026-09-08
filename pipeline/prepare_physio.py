@@ -1,13 +1,13 @@
 """Prepare physiological data for brms modelling.
 
-Phase 1 — Baseline HR:
+Phase 1: Baseline HR:
     Resting HR per subject with cluster labels → baseline_hr.csv.
-Phase 2 — Delta HR:
+Phase 2: Delta HR:
     Change-from-baseline HR in long format → delta_hr_long.csv,
     delta_hr_long_b.csv.
-Phase 3 — Cardiac multivariate:
+Phase 3: Cardiac multivariate:
     Delta HR + varimax-rotated HRV RC1-3 → physio_cardiac_long.csv.
-Phase 4 — Hormones:
+Phase 4: Hormones:
     Cortisol + testosterone by cluster → hormones.csv (Cohort A only).
 """
 

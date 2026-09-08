@@ -26,8 +26,8 @@ within the chosen window are still extracted.
 from pathlib import Path
 
 import pandas as pd
-from scipy.io import loadmat
 
+from scipy.io import loadmat
 
 MARKER_EXP_START = 101  # Start of opponent block
 MARKER_CUBE_START = 105  # StartCube (pre-trial countdown)
@@ -60,8 +60,11 @@ def _select_block_bounds(nids):
     boundaries = t101 + [len(nids)]
     windows = [(t101[k], boundaries[k + 1]) for k in range(len(t101))]
     t107_counts = [
-        sum(1 for i, n in enumerate(nids)
-            if n == MARKER_CHOICE_OPEN and start <= i < end)
+        sum(
+            1
+            for i, n in enumerate(nids)
+            if n == MARKER_CHOICE_OPEN and start <= i < end
+        )
         for start, end in windows
     ]
 
@@ -73,7 +76,7 @@ def _select_block_bounds(nids):
         # Abnormal block(s): fall back to using the two T101s anyway.
         opp1_idx, opp2_idx = 0, 1
     else:
-        # >2 T101s but no two valid windows — best-effort: first and last.
+        # >2 T101s but no two valid windows. Best-effort: first and last.
         opp1_idx, opp2_idx = 0, len(t101) - 1
 
     return windows[opp1_idx], windows[opp2_idx]
@@ -87,7 +90,7 @@ def _extract_block(events, n_trials=15):
     Slices events as ``trial(idx:end)`` and advances ``idx`` after each
     T107, exactly as in aggression_choices_biopac.m.
     """
-    nids = [int(e['nid'].flatten()[0]) for e in events]
+    nids = [int(e["nid"].flatten()[0]) for e in events]
     out = []
     idx = 0
     for j in range(n_trials):
@@ -97,18 +100,18 @@ def _extract_block(events, n_trials=15):
                 ons = k
                 break
         if ons is None:
-            out.append({'trial_in_block': j + 1, 'choice': 'none', 'shock': 0})
+            out.append({"trial_in_block": j + 1, "choice": "none", "shock": 0})
             continue
 
         next1 = nids[ons + 1] if ons + 1 < len(nids) else None
         next2 = nids[ons + 2] if ons + 2 < len(nids) else None
 
         if next1 == MARKER_CHOSE_SHOCK or next2 == MARKER_CHOSE_SHOCK:
-            out.append({'trial_in_block': j + 1, 'choice': 'shock', 'shock': 1})
+            out.append({"trial_in_block": j + 1, "choice": "shock", "shock": 1})
         elif next1 == MARKER_CHOSE_RING or next2 == MARKER_CHOSE_RING:
-            out.append({'trial_in_block': j + 1, 'choice': 'ring', 'shock': 0})
+            out.append({"trial_in_block": j + 1, "choice": "ring", "shock": 0})
         else:
-            out.append({'trial_in_block': j + 1, 'choice': 'none', 'shock': 0})
+            out.append({"trial_in_block": j + 1, "choice": "none", "shock": 0})
 
         idx = ons + 1
 
@@ -125,10 +128,10 @@ _CANONICAL_PATCHES = {
     # P102: block 2 has 16 T107s (one duplicate). Canonical drops the dud
     # at idx 786 (trial 27, ME=0) and shifts; net effect: trial 27 becomes
     # shock=1, trial 28 becomes shock=0 (rather than 0, 1).
-    'P102': {26: 1, 27: 0},
+    "P102": {26: 1, 27: 0},
     # BF326: block 2 has 16 T107s (duplicate around idx 695/697). Drop the
     # dud and shift; trials 23,24,26,28 of overall sequence move by one.
-    'BF326': {22: 1, 23: 0, 25: 1, 27: 0},
+    "BF326": {22: 1, 23: 0, 25: 1, 27: 0},
     # BF060: block 1 has only 14 T107s instead of 15. The recording cut off
     # mid-trial-14 (T107->T108 but no T105/T106/T110/T111) and skipped
     # straight to block 2's T101 after an unusual 181-second gap (normal:
@@ -137,7 +140,7 @@ _CANONICAL_PATCHES = {
     # is unambiguously a shock in the raw events (T107->T108->T105->T106
     # ->T111->T104) and is left as recorded — this differs from NF, which
     # set it to 0, but matches the actual data.
-    'BF060': {14: float('nan')},
+    "BF060": {14: float("nan")},
 }
 
 
@@ -178,29 +181,34 @@ def parse_events(mat_path, apply_patches=True):
 
     trials = []
     for t in trials_b1:
-        trials.append({
-            'trial': t['trial_in_block'],
-            'opponent': 1,
-            'choice': t['choice'],
-            'shock': t['shock'],
-        })
+        trials.append(
+            {
+                "trial": t["trial_in_block"],
+                "opponent": 1,
+                "choice": t["choice"],
+                "shock": t["shock"],
+            }
+        )
     for t in trials_b2:
-        trials.append({
-            'trial': 15 + t['trial_in_block'],
-            'opponent': 2,
-            'choice': t['choice'],
-            'shock': t['shock'],
-        })
+        trials.append(
+            {
+                "trial": 15 + t["trial_in_block"],
+                "opponent": 2,
+                "choice": t["choice"],
+                "shock": t["shock"],
+            }
+        )
 
     if apply_patches:
         import math
+
         subj = Path(mat_path).stem
         for trial_idx, shock_val in _CANONICAL_PATCHES.get(subj, {}).items():
-            trials[trial_idx]['shock'] = shock_val
+            trials[trial_idx]["shock"] = shock_val
             if isinstance(shock_val, float) and math.isnan(shock_val):
-                trials[trial_idx]['choice'] = 'unknown'
+                trials[trial_idx]["choice"] = "unknown"
             else:
-                trials[trial_idx]['choice'] = 'shock' if shock_val == 1 else 'ring'
+                trials[trial_idx]["choice"] = "shock" if shock_val == 1 else "ring"
 
     return trials
 

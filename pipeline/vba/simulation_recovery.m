@@ -6,8 +6,8 @@ function [cov_stats, corr_preds] = data_simulation(cohort, nSim)
 % Then compute the covariance and correlation of recovered estimates.
 %
 % Exports to data/cohort_{cohort}/:
-%   cov_stats.mat  — [determinant, condition_number] per subject
-%   corr_preds.mat — per-subject correlation matrix of recovered parameters
+%   cov_stats.mat   determinant, condition_number] per subject
+%   corr_preds.mat  per-subject correlation matrix of recovered parameters
 %
 % Parameters
 % ----------

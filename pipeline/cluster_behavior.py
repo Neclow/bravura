@@ -2,11 +2,11 @@
 
 """Cluster participants based on behavioural data.
 
-Phase 1 — Grid search (deterministic, fast):
+Phase 1:  Grid search (deterministic, fast):
     k × solver silhouette table.
-Phase 2 — Consensus clustering (MC, ~2 min):
+Phase 2: Consensus clustering (MC, ~2 min):
     fuzzy_fit_predict with chosen k/solver → behav_Xa.csv, behav_Xb.csv.
-Phase 3 — Metric ablation (deterministic):
+Phase 3: Metric ablation (deterministic):
     Which VBA fit metric to include, given k=3 / k-means.
 """
 

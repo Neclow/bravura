@@ -6,16 +6,16 @@ implementation, based on Cherek et al. (1997).
 
 ## Contents
 
-- **`Run_Experiment.m`** — the Psychtoolbox task. A competitive game against a
+- **`Run_Experiment.m`:** the Psychtoolbox task. A competitive game against a
   fictitious opponent: press **A** (×100) to earn a point, **B** (×10) to
   steal a point and start a protection interval, or **C** (×10) to start a
   protection interval. Provocations subtract points whenever no protection is
   active. Writes `<SubjectID>.mat` containing the `InGameVars` struct, whose
   `Events` cell array (rows: `name; time; points`) logs every selection.
-- **`PSAPResponses.m`** — feature extraction. Scores the `.mat` files into
+- **`PSAPResponses.m`:** feature extraction. Scores the `.mat` files into
   proactive (`pA/pB/pC`) and reactive (`rA/rB/rC`) button proportions, split
   at 120 s. Run `PSAPResponses('data/raw/psap', 'PSAPResps.xlsx')`.
-- **`Functions/`** — Psychtoolbox draw/input helpers used by the task.
+- **`Functions/`:** Psychtoolbox draw/input helpers used by the task.
 
 ## Requirements
 

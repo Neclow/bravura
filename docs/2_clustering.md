@@ -60,9 +60,9 @@ PCA (2 components) is fit on Cohort A and applied to both cohorts for
 visualisation.
 
 - **Outputs:**
-  - `data_v2/processed/behav_Xa.csv` — Cohort A features + cluster labels + PCA
-  - `data_v2/processed/behav_Xb.csv` — Cohort B features + cluster labels + PCA
-  - `data_v2/processed/mc_consensus_k-means_3.npz` — MC label counts and stability
+  - `data_v2/processed/behav_Xa.csv`: Cohort A features + cluster labels + PCA
+  - `data_v2/processed/behav_Xb.csv`: Cohort B features + cluster labels + PCA
+  - `data_v2/processed/mc_consensus_k-means_3.npz`: MC label counts and stability
 
 ## Phase 3: Metric ablation
 

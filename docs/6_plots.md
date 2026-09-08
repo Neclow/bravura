@@ -7,14 +7,14 @@ PNG (300 dpi) to `img_v2/`.
 
 ## Figure dependency table
 
-| Figure | Script | Data |
-| ------ | ------ | ---- |
-| Fig 2b — Shocks given vs opponent | `fig2_shocks_given.py` | `brms/shocks_overview/posterior_epred.csv`, `bayes_factors.csv`, `AggressionScript.xlsx` |
-| Fig 2c — Belief vs opponent | `fig2_belief.py` | `brms/beliefs_overview/posterior_epred.csv`, `bayes_factors.csv` |
-| Fig 2 — Trial duration | `fig2_trial_duration.py` | `shared/trial_events.csv`, `cohort_{a,b}/outliers.mat`, `brms/trial_duration/` |
-| Fig 3 — Decision modelling | `fig3_decision_modelling.py` | `cohort_{a,b}/predictions.csv`, `decisions.csv`, `subject_ids.csv`, `outliers.mat`, `corr_preds.mat`, `cov_stats.mat` |
-| Fig 3 — PCA scatter | `fig3_pca.py` | `behav_Xa.csv`, `behav_Xb.csv` (passed as arguments) |
-| Fig S1 — Participant exclusion | `figS1_participants.py` | `cohort_{a,b}/aggroPerformance.xlsx`, `beliefs.xlsx` |
+| Figure | Panel | Script | Data |
+| ------ | ----- | ------ | ---- |
+| Fig 2 | b: Shocks given vs opponent | `fig2_shocks_given.py` | `brms/shocks_overview/posterior_epred.csv`, `bayes_factors.csv`, `AggressionScript.xlsx` |
+| Fig 2 | c: Belief vs opponent | `fig2_belief.py` | `brms/beliefs_overview/posterior_epred.csv`, `bayes_factors.csv` |
+| Fig 2 | Trial duration | `fig2_trial_duration.py` | `shared/trial_events.csv`, `cohort_{a,b}/outliers.mat`, `brms/trial_duration/` |
+| Fig 3 | Decision modelling | `fig3_decision_modelling.py` | `cohort_{a,b}/predictions.csv`, `decisions.csv`, `subject_ids.csv`, `outliers.mat`, `corr_preds.mat`, `cov_stats.mat` |
+| Fig 3 | PCA scatter | `fig3_pca.py` | `behav_Xa.csv`, `behav_Xb.csv` (passed as arguments) |
+| Fig S1 | Participant exclusion | `figS1_participants.py` | `cohort_{a,b}/aggroPerformance.xlsx`, `beliefs.xlsx` |
 
 Scripts with `pixi` tasks:
 

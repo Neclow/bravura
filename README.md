@@ -51,17 +51,17 @@ addpath(genpath('extern/ledalab'))
 See [docs/](docs) for detailed instructions for each pipeline stage. The
 pipeline runs in six stages:
 
-1. **Computational modelling** — VBA grid search, Bayesian model averaging,
+1. **Computational modelling:** VBA grid search, Bayesian model averaging,
    simulation recovery (MATLAB)
-2. **Clustering** — k-means consensus clustering on behavioural features,
+2. **Clustering:** k-means consensus clustering on behavioural features,
    sensitivity analyses
-3. **Behavioural preparation** — reshape shock, PSAP, and latency data for
+3. **Behavioural preparation:** reshape shock, PSAP, and latency data for
    modelling
-4. **Physiology preparation** — baseline HR, delta HR, HRV components,
+4. **Physiology preparation:** baseline HR, delta HR, HRV components,
    multivariate physio, hormones
-5. **Bayesian models** — brms regression models (shocks, PSAP, delta HR,
+5. **Bayesian models:** brms regression models (shocks, PSAP, delta HR,
    latency, cardiac, replication)
-6. **Plots** — publication figures
+6. **Plots:** publication figures
 
 The `data_v2/` directory has its own [README](data_v2/README.md) describing all
 data files and their provenance.
