@@ -13,8 +13,8 @@ physiology, and an independent replication cohort.
 
 ### Prerequisites
 
-- [pixi](https://pixi.sh) (conda-based package manager)
-- MATLAB R2025b (for computational modelling and physiology extraction only)
+- pixi (conda-based package manager)
+- MATLAB (used version: R2025b; for computational modelling and physiology extraction only)
 
 ### Dependencies
 
@@ -33,7 +33,6 @@ Four external toolboxes are tracked as git submodules in `extern/`:
 | [VBA-toolbox](https://github.com/MBB-team/VBA-toolbox) | Variational Bayesian Analysis (model fitting, BMA) |
 | [PhysioNet-Cardiovascular-Signal-Toolbox](https://github.com/Neclow/PhysioNet-Cardiovascular-Signal-Toolbox) | HRV analysis (`bravura` branch) |
 | [MarcusVollmer-HRV](https://github.com/MarcusVollmer/HRV) | HRV toolbox |
-| [ledalab](https://github.com/ledalab/ledalab) | EDA decomposition (Ledalab) |
 
 Add them to the MATLAB path before running any pipeline scripts:
 
@@ -42,7 +41,6 @@ addpath(genpath('src/vba'))
 addpath(genpath('extern/VBA-toolbox-master'))
 addpath(genpath('extern/PhysioNet-Cardiovascular-Signal-Toolbox'))
 addpath(genpath('extern/MarcusVollmer-HRV'))
-addpath(genpath('extern/ledalab'))
 ```
 
 ## Usage
