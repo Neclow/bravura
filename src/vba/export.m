@@ -2,13 +2,13 @@ function export(cohort)
 % Export BMA results to CSV and posteriors to .mat for Python.
 %
 % Exports to data/cohort_{cohort}/:
-%   coefficients.csv       — BMA-averaged coefficients [Kr1, Krc, Kp, Kwc]
-%   predictions.csv        — VBA predicted P(shock) per trial
-%   decisions.csv          — actual binary decisions per trial
-%   fit_metrics.csv        — R², accuracy, balanced accuracy, R²_BMA_avg, log evidence
-%   subject_ids.csv        — subject ID list
-%   free_energy_matrix.csv — per-model free energies
-%   vba_posteriors.mat     — muPhi and SigmaPhi per subject (for MC uncertainty)
+%   coefficients.csv       BMA-averaged coefficients [Kr1, Krc, Kp, Kwc]
+%   predictions.csv        VBA predicted P(shock) per trial
+%   decisions.csv          actual binary decisions per trial
+%   fit_metrics.csv        R², accuracy, balanced accuracy, R²_BMA_avg, log evidence
+%   subject_ids.csv        subject ID list
+%   free_energy_matrix.csv per-model free energies
+%   vba_posteriors.mat     muPhi and SigmaPhi per subject (for MC uncertainty)
 %
 % Parameters
 % ----------

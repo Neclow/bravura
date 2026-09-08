@@ -14,16 +14,12 @@ end
 ext_dir = fullfile(script_dir, '..', '..', 'extern');
 physionet_dir = fullfile(ext_dir, 'PhysioNet-Cardiovascular-Signal-Toolbox');
 vollmer_dir = fullfile(ext_dir, 'MarcusVollmer-HRV');
-ledalab_dir = fullfile(ext_dir, 'ledalab');
-
 data_raw = fullfile(script_dir, '..', '..', 'data', 'raw');
 prev_dir = pwd;
 cd(data_raw);
 
 Fs = 1000;
 dsample=4;
-dsample_resp=10;
-Fs_ds = 100; % Fs from the downsampled timeseries imported...
 
 files=dir(fullfile('Sync_phys','P*.mat'));
 
@@ -105,52 +101,6 @@ for i=1:length(files)
         auxS(j).(['TRI_' fn{k}]) = TRI;
         auxS(j).(['TINN_' fn{k}]) = TINN;
         auxS(j).(['rrHRV_' fn{k}]) = rrHRV;
-
-        % breathing
-        outputResp=RespirationParameters3(TT_Resp(tr,:).Resp_ds, Fs_ds);
-        auxS(j).(['RespRate_' fn{k}]) = 60/outputResp.RRavg;
-        auxS(j).(['RespWidth_' fn{k}]) = outputResp.Wavg;
-        auxS(j).(['RespDepth_' fn{k}]) = outputResp.Pavg;
-        auxS(j).(['RespRatio_' fn{k}]) = outputResp.Ratioavg;
-
-        % EDA (requires ledalab)
-        if exist(ledalab_dir, 'dir')
-            addpath(genpath(ledalab_dir));
-            eda_batch = fullfile(pwd, '_eda_tmp');
-            if ~exist(eda_batch, 'dir'), mkdir(eda_batch); end
-            current_folder = pwd;
-            time_step_eda = 1/Fs_ds;
-            data.conductance = TT_EDA(tr,:).EDA_ds';
-            data.time = [0:length(TT_EDA(tr,:).EDA_ds)-1]*time_step_eda;
-            data.event(1).time=0;
-            data.event(1).nid=1;
-            data.event(1).name=fn{k};
-            save(fullfile(eda_batch, 'leda_temp_EDA.mat'), 'data')
-
-            Ledalab([eda_batch filesep], 'open', 'mat', 'filter',[4 1], 'smooth', {'adapt'},'downsample', 2 ,'analyze','CDA', 'optimize',2, 'export_era', [0 data.time(end) 0.05 1])
-            cd(current_folder)
-            load(fullfile(current_folder, 'leda_temp_EDA_era.mat'))
-            delete(fullfile(current_folder, 'batchmode_protocol.mat'))
-            delete(fullfile(eda_batch, 'leda_temp_EDA.mat'))
-            delete(fullfile(current_folder, 'leda_temp_EDA_era.mat'))
-            toc
-            nSCRcda = results.CDA.nSCR;
-            Toniccda = results.CDA.Tonic;
-            AmpSumcda = results.CDA.Tonic;
-            rmpath(genpath(ledalab_dir));
-            auxS(j).(['nSCRcda_' fn{k}]) = nSCRcda/(data.time(end)/60);
-            auxS(j).(['Toniccda_' fn{k}]) = Toniccda;
-            auxS(j).(['AmpSumcda_' fn{k}]) = AmpSumcda/nSCRcda;
-
-            nSCRttp = results.TTP.nSCR;
-            AmpSumttp = results.TTP.AmpSum;
-            auxS(j).(['nSCRttp_' fn{k}]) = nSCRttp/(data.time(end)/60);
-            auxS(j).(['AmpSumttp_' fn{k}]) = AmpSumttp/nSCRttp;
-        else
-            if k == 1 && j == 1
-                warning('ledalab not found in %s — skipping EDA analysis.', ext_dir);
-            end
-        end
 
         is = etime(clock,s2);
         tremaining = is/k * (numel(fn)-k);

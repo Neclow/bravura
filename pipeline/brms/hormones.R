@@ -7,7 +7,7 @@
 # Variables: TotalCort (tonic level), StressChange (raw reactivity proxy;
 # circadian-corrected version unavailable), Testo_mean, TC_ratio.
 #
-# Outputs per variable to data/brms/_hormones/<var>/ (bayes_factors.csv,
+# Outputs per variable to data/brms/physio_hormones/<var>/ (bayes_factors.csv,
 # posterior_epred.csv, predicted_means.csv, diagnostics), matching baseline_hr.R.
 #
 # Run with: pixi run Rscript src/brms/_hormones.R [--overwrite]
@@ -36,7 +36,7 @@ cat("N:", nrow(df), "| Per cluster:", table(df$Cluster), "\n\n")
 
 fit_one <- function(var, cfg) {
   cat("\n========== ", var, " ==========\n", sep = "")
-  out_dir <- file.path(DEFAULT_BRMS_DIR, "_hormones", var)
+  out_dir <- file.path(DEFAULT_BRMS_DIR, "physio_hormones", var)
   dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
   formula <- as.formula(paste(var, "~ Cluster + Condition"))

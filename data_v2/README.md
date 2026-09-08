@@ -14,7 +14,6 @@ Original data from AggressionProjectDataShare.
 | ---- | ----------- |
 | `MatlabEvents/` | Per-subject BioPac event files (`.mat`, one per Cohort B subject) |
 | `psap/` | PSAP task data (`.mat`, one per Cohort A subject) |
-| `Sync_phys/` | Synchronised physiology files (`.mat`, Cohort B) |
 | `CortisolData.xlsx` | Salivary cortisol concentrations |
 | `VR main-testosterone-september2019-longxlsx.xlsx` | Salivary testosterone concentrations |
 | `additional.xlsx` | Additional participant metadata (PSAP button presses, questionnaires) |
@@ -42,7 +41,8 @@ Cohort A (N=126, 114 after exclusion, 112 for physiology).
 | `aggroPerformance.xlsx` | Per-trial shock decisions, latencies, choices (126 subjects x 30 trials) |
 | `latPerformance.xlsx` | Clean latency data (124 subjects) |
 | `beliefs.xlsx` | Belief ratings per opponent (0–10 scale) |
-| `physPerformance.xlsx` | Physiological features (HR, HRV, respiration, EDA) across experimental blocks |
+| `physPerformance.xlsx` | Cardiac features (HR, HRV) across experimental blocks |
+| `physPerformanceAll.xlsx` | Full physiological features including respiration and EDA (archive) |
 
 #### VBA model fitting
 
@@ -91,8 +91,8 @@ Each cohort's `vba_models/` directory contains 256 `.mat` files from a grid sear
 
 **BMA outputs** in `vba_bma/`:
 
-- `free_energy.mat` — Free energy per model (input to BMA)
-- `bma_results.mat` — BMA group and summary results (`groupResult`, `summaryResult`)
+- `free_energy.mat`: Free energy per model (input to BMA)
+- `bma_results.mat`: BMA group and summary results (`groupResult`, `summaryResult`)
 
 **Produced by:** `pipeline/vba/bma.m`
 
@@ -143,7 +143,6 @@ Produced by `pixi run prepare_physio`.
 | `delta_hr_long.csv` | `brms_delta_hr` |
 | `delta_hr_long_b.csv` | `brms_delta_hr_rep` |
 | `physio_cardiac_long.csv` | `brms_physio_cardiac` |
-| `physio_multivariate_long.csv` | `brms_physio_mv` |
 | `hormones.csv` | `brms_hormones` |
 
 ## Bayesian model outputs
@@ -163,22 +162,22 @@ Each subdirectory corresponds to a brms script in `pipeline/brms/` and stores ca
 | `latency/` | `latency.R` | Log-normal shock latency model |
 | `physio_cardiac/` | `physio_cardiac.R` | Multivariate cardiac model (HR + HRV RCs) |
 | `trial_duration/` | `trial_duration.R` | Trial duration by cluster |
-| `_hormones/` | `hormones.R` | Cortisol/testosterone models (prefix `_` = exploratory, not in main paper) |
+| `physio_hormones/` | `hormones.R` | Cortisol/testosterone models |
 
 #### Standard outputs per model
 
-- `fit_*.rds` — Fitted brms model object(s)
-- `fit_prior*.rds` — Prior-only model for prior predictive checks
-- `summary.txt` — Model summary (fixed effects, random effects, family, formula)
-- `bayes_factors.csv` — Savage-Dickey or pairwise Bayes factors
-- `predicted_means.csv` — Posterior predicted means per condition
-- `posterior_epred.csv` — Posterior expected predictions (required; used by notebooks for plotting)
-- `prior_predictive_check.png`, `posterior_predictive_check.png` — Predictive check plots
-- `trace_plots.png` — MCMC trace and density plots
+- `fit_*.rds`: Fitted brms model object(s)
+- `fit_prior*.rds`: Prior-only model for prior predictive checks
+- `summary.txt`: Model summary (fixed effects, random effects, family, formula)
+- `bayes_factors.csv`: Savage-Dickey or pairwise Bayes factors
+- `predicted_means.csv`: Posterior predicted means per condition
+- `posterior_epred.csv`: Posterior expected predictions (required; used by notebooks for plotting)
+- `prior_predictive_check.png`, `posterior_predictive_check.png`: Predictive check plots
+- `trace_plots.png`: MCMC trace and density plots
 
 Some models also save `fixed_effects.csv`, `random_effects.csv`, `model_comparison.txt`, or `posterior_draws.csv`.
 
-#### `_hormones/` subdirectories
+#### `physio_hormones/` subdirectories
 
 | Subdirectory | Outcome |
 | ------------ | ------- |
