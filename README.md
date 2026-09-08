@@ -52,9 +52,9 @@ pipeline runs in six stages:
    simulation recovery (MATLAB)
 2. **Clustering:** k-means consensus clustering on behavioural features,
    sensitivity analyses
-3. **Behavioural preparation:** reshape shock, PSAP, and latency data for
+3. **Behavioural data preparation:** reshape shock, PSAP, and latency data for
    modelling
-4. **Physiology preparation:** baseline HR, delta HR, HRV components,
+4. **Physiological data preparation:** baseline HR, delta HR, HRV components,
    multivariate physio, hormones
 5. **Bayesian models:** brms regression models (shocks, PSAP, delta HR,
    latency, cardiac, replication)
