@@ -1,7 +1,6 @@
 # Bravura
 
-Repository for _Bravura, a virtual reality-based paradigm for the study of
-physical aggression_, under review, 2026.
+Repository for _Bravura: an open immersive virtual reality paradigm for human reactive and proactive aggression_, under review, 2026.
 
 Bravura is a VR-based buzz-wire competitive task where participants
 choose to shock or not shock fictitious opponents across 30 trials. A
@@ -72,8 +71,8 @@ If you use this code, please cite:
 
 ```bibtex
 @article{scheidwasser2026bravura,
-  title   = {Bravura, a virtual reality-based paradigm for the study of physical aggression},
-  author  = {Scheidwasser, Neil and Rodrigues, Jo{\~a}o and Sandi, Carmen},
+  title   = {Bravura: an open immersive virtual reality paradigm for human reactive and proactive aggression},
+  author  = {Scheidwasser, Neil and Rodrigues, Jo{\~a}o and Streuber, Stephan and Sandi, Carmen},
   year    = {2026},
   note    = {Under review}
 }
