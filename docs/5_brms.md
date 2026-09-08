@@ -92,7 +92,7 @@ freedom (nu ~ Gamma(2, 0.1)).
 
 ### hormones.R
 
-Exploratory models (prefix `_` on output directory). Fits one Student-t model
+Exploratory models (output to `physio_hormones/`). Fits one Student-t model
 per hormone variable (TotalCort, StressChange_corrected, Testo_mean,
 TC_ratio). Condition (stress/control) included to marginalise over cortisol
 sampling differences. Each variable has tailored prior scales.

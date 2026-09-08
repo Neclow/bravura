@@ -162,7 +162,7 @@ Each subdirectory corresponds to a brms script in `pipeline/brms/` and stores ca
 | `latency/` | `latency.R` | Log-normal shock latency model |
 | `physio_cardiac/` | `physio_cardiac.R` | Multivariate cardiac model (HR + HRV RCs) |
 | `trial_duration/` | `trial_duration.R` | Trial duration by cluster |
-| `_hormones/` | `hormones.R` | Cortisol/testosterone models (prefix `_` = exploratory, not in main paper) |
+| `physio_hormones/` | `hormones.R` | Cortisol/testosterone models |
 
 #### Standard outputs per model
 
@@ -177,7 +177,7 @@ Each subdirectory corresponds to a brms script in `pipeline/brms/` and stores ca
 
 Some models also save `fixed_effects.csv`, `random_effects.csv`, `model_comparison.txt`, or `posterior_draws.csv`.
 
-#### `_hormones/` subdirectories
+#### `physio_hormones/` subdirectories
 
 | Subdirectory | Outcome |
 | ------------ | ------- |
