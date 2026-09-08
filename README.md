@@ -2,13 +2,6 @@
 
 Repository for _Bravura: an open immersive virtual reality paradigm for human reactive and proactive aggression_, under review, 2026.
 
-Bravura is a VR-based buzz-wire competitive task where participants
-choose to shock or not shock fictitious opponents across 30 trials. A
-variational Bayesian model estimates aggression coefficients from trial-by-trial
-decisions. k-means clustering on behavioural features identifies three subtypes
-(non-aggressive, reactive, proactive), validated against the PSAP, heart rate
-physiology, and an independent replication cohort.
-
 ## Installation
 
 ### Prerequisites
@@ -57,7 +50,7 @@ pipeline runs in six stages:
 4. **Physiological data preparation:** baseline HR, delta HR, HRV components,
    multivariate physio, hormones
 5. **Bayesian models:** brms regression models (shocks, PSAP, delta HR,
-   latency, cardiac, replication)
+   latency, cardiac)
 6. **Plots:** publication figures
 
 The `data_v2/` directory has its own [README](data_v2/README.md) describing all
