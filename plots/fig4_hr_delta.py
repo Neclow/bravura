@@ -24,13 +24,12 @@ from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 FIG4_DIR = f"{DEFAULT_IMG_DIR}/fig4"
 os.makedirs(FIG4_DIR, exist_ok=True)
 
-CLUSTER_HUE_ORDER = [cl["name"] for cl in CLUSTERS]
+CLUSTER_HUE_ORDER = ["Non-aggressive", "Reactive", "Proactive"]
 CLUSTER_ORDER = [cl["label"] for cl in CLUSTERS]
 
 HR_COLS = ["HR_Pre", "HR_Op1T1", "HR_Op1T2", "HR_Op2T1", "HR_Op2T2"]
 BLOCK_LABELS = ["Pre", "1.1", "1.2", "2.1", "2.2"]
 
-BF_THRESHOLD = 10**0.5
 
 
 def parse_contrast(contrast):
@@ -71,9 +70,9 @@ def load_delta1_data():
     delta_a = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/delta_hr_long.csv")
     delta_b = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/delta_hr_long_b.csv")
 
-    d1_a = delta_a[delta_a["block"] == "1.1"][["subject", "Cluster", "delta_hr"]].copy()
+    d1_a = delta_a[delta_a["block"] == 1.1][["subject", "Cluster", "delta_hr"]].copy()
     d1_a["cohort"] = "A"
-    d1_b = delta_b[delta_b["block"] == "1.1"][["subject", "Cluster", "delta_hr"]].copy()
+    d1_b = delta_b[delta_b["block"] == 1.1][["subject", "Cluster", "delta_hr"]].copy()
     d1_b["cohort"] = "B"
 
     return pd.concat([d1_a, d1_b], ignore_index=True)
@@ -136,15 +135,13 @@ def build_delta_hr_annotations(bf):
     pairs : list of tuple
     labels : list of str
     """
-    sig = bf[(bf["excl_zero"]) & (bf["BF10"] >= BF_THRESHOLD)]
+    sig = bf[bf["excl_zero"]]
     pairs = []
     labels = []
     for _, row in sig.iterrows():
         c1, c2 = parse_contrast(row["contrast"])
-        bf_val = row["BF10"]
-        label = "BF > 100" if bf_val > 100 else f"BF = {bf_val:.1f}"
         pairs.append(((row["block"], c1), (row["block"], c2)))
-        labels.append(label)
+        labels.append("*")
     return pairs, labels
 
 
@@ -170,14 +167,17 @@ def plot_delta_hr(posterior, bf):
             **plot_kw,
             palette=CLUSTER_PALETTE,
             errorbar=("pi", 95),
-            capsize=0.05,
+            capsize=0.15,
+            err_kws={"linewidth": 1},
             ax=ax,
         )
 
-        ax.set_xlabel("Block")
-        ax.set_ylabel(r"$\Delta$HR (bpm)")
+        ax.set_xlabel("Block", fontweight="bold")
+        ax.set_ylabel(r"$\Delta$HR (bpm)", fontweight="bold")
         ax.legend(title="", loc="upper right", frameon=False)
         ax.set_axisbelow(True)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         if pairs:
             annot = Annotator(ax, pairs, **plot_kw)
@@ -199,7 +199,6 @@ def plot_delta_hr(posterior, bf):
 
 def plot_delta1_cohorts(delta1):
     """Plot delta1-HR by cluster, Cohort A vs B boxplot (Fig. 4c)."""
-    n_cohorts = 2
     colors = [CLUSTER_PALETTE[c] for c in CLUSTER_HUE_ORDER]
 
     with plt.style.context(DEFAULT_STYLE):
@@ -207,43 +206,46 @@ def plot_delta1_cohorts(delta1):
 
         plot_kw = dict(
             data=delta1,
-            hue="Cluster",
+            hue="cohort",
             y="delta_hr",
-            x="cohort",
-            order=["A", "B"],
-            hue_order=CLUSTER_HUE_ORDER,
+            x="Cluster",
+            order=CLUSTER_HUE_ORDER,
+            hue_order=["A", "B"],
         )
 
         sns.boxplot(
             **plot_kw,
-            palette=CLUSTER_PALETTE,
+            color="0.8",
             showfliers=False,
             ax=ax,
         )
 
+        n_clusters = len(CLUSTER_HUE_ORDER)
         box_patches = [p for p in ax.patches if isinstance(p, PathPatch)]
         for i, patch in enumerate(box_patches):
-            cluster_idx = i // n_cohorts
-            cohort_idx = i % n_cohorts
+            cluster_idx = i % n_clusters
+            cohort_idx = i // n_clusters
             c = colors[cluster_idx]
             alpha = 1.0 if cohort_idx == 0 else 0.4
             patch.set_facecolor(to_rgba(c, alpha))
             patch.set_edgecolor(c)
 
-        sns.swarmplot(
-            **plot_kw,
-            dodge=True,
-            palette="dark:k",
-            size=3,
-            alpha=0.8,
-            ax=ax,
-        )
+        # sns.swarmplot(
+        #     **plot_kw,
+        #     dodge=True,
+        #     palette="dark:k",
+        #     size=3,
+        #     alpha=0.4,
+        #     ax=ax,
+        # )
 
         ax.set_xlabel("")
-        ax.set_ylabel(r"$\Delta_1$HR (bpm)")
+        ax.set_ylabel(r"$\Delta_1$HR (bpm)", fontweight="bold")
         ax.set_axisbelow(True)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         handles, labels = ax.get_legend_handles_labels()
-        ax.legend(handles[:3], labels[:3], title="", frameon=True)
+        ax.legend(handles[:2], labels[:2], title="Cohort", frameon=False)
 
         fig.tight_layout()
         stem = f"{FIG4_DIR}/fig4c_delta1_hr_cohorts"
@@ -299,8 +301,10 @@ def plot_hr_timecourse(hr_stats, grand_stats):
 
         ax.set_xticks(x)
         ax.set_xticklabels(BLOCK_LABELS)
-        ax.set_xlabel("Block")
-        ax.set_ylabel("Heart rate (bpm)")
+        ax.set_xlabel("Block", fontweight="bold")
+        ax.set_ylabel("Heart rate (bpm)", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.legend(title="", frameon=False, ncol=4, columnspacing=0.5)
 
         fig.tight_layout()
@@ -334,7 +338,9 @@ def plot_delta_hr_heatmap(physio_hr, labels):
 
         ax.set_xticks(np.arange(len(BLOCK_LABELS[1:])))
         ax.set_xticklabels(BLOCK_LABELS[1:])
-        ax.set_xlabel("Block")
+        ax.set_xlabel("Block", fontweight="bold")
+        for label in ax.get_xticklabels():
+            label.set_fontweight("bold")
         ax.set_yticks([])
 
         for b in boundaries[:-1]:
@@ -352,7 +358,9 @@ def plot_delta_hr_heatmap(physio_hr, labels):
             )
 
         cbar = fig.colorbar(im, ax=ax, fraction=0.046, pad=0.04)
-        cbar.set_label(r"$\Delta$HR (bpm)")
+        cbar.set_label(r"$\Delta$HR (bpm)", fontweight="bold")
+        for label in cbar.ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         fig.tight_layout()
         stem = f"{FIG4_DIR}/figS7b_delta_hr_heatmap"

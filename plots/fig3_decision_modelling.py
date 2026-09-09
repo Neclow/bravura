@@ -62,7 +62,7 @@ def plot_decisions(actual_sorted, pred_sorted, shocked, wins):
         fig, axes = plt.subplots(
             1,
             3,
-            figsize=(7, 6),
+            figsize=(5, 4.2),
             gridspec_kw={"width_ratios": [1, 1, 0.05], "wspace": 0.08},
             layout="constrained",
         )
@@ -441,7 +441,7 @@ def plot_trial_pshock(cluster_means, cluster_sems, shocked):
     linestyles = ["-", "--", ":"]
 
     with plt.style.context(DEFAULT_STYLE):
-        fig, ax = plt.subplots(figsize=(7, 3.5))
+        fig, ax = plt.subplots(figsize=(8.12, 3.5))
 
         x = np.arange(1, 31)
         for i, cl in enumerate(CLUSTERS):

@@ -24,7 +24,7 @@ from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 FIG3_DIR = f"{DEFAULT_IMG_DIR}/fig3"
 os.makedirs(FIG3_DIR, exist_ok=True)
 
-CLUSTER_HUE_ORDER = [cl["name"] for cl in CLUSTERS]
+CLUSTER_HUE_ORDER = ["Non-aggressive", "Reactive", "Proactive"]
 
 PSAP_FEATURES = ["pA", "pB", "pC", "rA", "rB", "rC"]
 
@@ -79,7 +79,7 @@ def plot_psap_concurrent(posterior, bf):
     sig_contrasts = build_concurrent_annotations(bf)
 
     with plt.style.context(DEFAULT_STYLE):
-        fig, axes = plt.subplots(1, 2, figsize=(5, 2.5), sharey=True)
+        fig, axes = plt.subplots(1, 2, figsize=(5, 63 / 25.4), sharey=True)
 
         for ax, phase in zip(axes, ["Proactive", "Reactive"]):
             phase_data = posterior[posterior["phase"] == phase]
@@ -97,11 +97,12 @@ def plot_psap_concurrent(posterior, bf):
                 **plot_kw,
                 palette=CLUSTER_PALETTE,
                 errorbar=("pi", 95),
-                capsize=0.1,
+                capsize=0.15,
+                err_kws={"linewidth": 1},
                 ax=ax,
             )
-            ax.set_title(f"{phase} phase", fontweight="bold")
-            ax.set_xlabel("")
+            ax.set_title(phase, fontweight="bold")
+            ax.set_xlabel("Participant decision", fontweight="bold")
             ax.set_axisbelow(True)
             ax.set_ylim(0, 1)
             ax.get_legend().remove()
@@ -117,6 +118,7 @@ def plot_psap_concurrent(posterior, bf):
             for label in ax.get_xticklabels() + ax.get_yticklabels():
                 label.set_fontweight("bold")
 
+        fig.suptitle("PSAP phase", fontweight="bold")
         plt.tight_layout()
         stem = f"{FIG3_DIR}/fig3f_psap_concurrent"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")

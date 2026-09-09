@@ -2,6 +2,7 @@ source("src/brms/utils.R")
 library(bayesplot)
 library(gridExtra)
 
+pdf(NULL)
 brms_dir <- file.path(DEFAULT_BRMS_DIR, "physio_cardiac")
 img_dir <- "img_v2/fig4"
 dir.create(img_dir, showWarnings = FALSE, recursive = TRUE)

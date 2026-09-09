@@ -1,6 +1,7 @@
 source("src/brms/utils.R")
 library(gridExtra)
 
+pdf(NULL)
 out_dir <- "img_v2/fig3"
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 

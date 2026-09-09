@@ -11,7 +11,7 @@ from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 FIG4_DIR = f"{DEFAULT_IMG_DIR}/fig4"
 os.makedirs(FIG4_DIR, exist_ok=True)
 
-CLUSTER_HUE_ORDER = [cl["name"] for cl in CLUSTERS]
+CLUSTER_HUE_ORDER = ["Non-aggressive", "Reactive", "Proactive"]
 
 POSTERIOR_DIR = f"{DEFAULT_BRMS_DIR}/baseline_hr"
 
@@ -45,7 +45,8 @@ def plot_baseline_hr(posterior, observed):
             order=CLUSTER_HUE_ORDER,
             palette=CLUSTER_PALETTE,
             errorbar=("pi", 95),
-            capsize=0.05,
+            capsize=0.15,
+            err_kws={"linewidth": 1},
             alpha=0.9,
             ax=ax,
         )
@@ -60,9 +61,11 @@ def plot_baseline_hr(posterior, observed):
             ax=ax,
         )
 
-        ax.set_xlabel("Cluster")
-        ax.set_ylabel("Baseline HR (bpm)")
+        ax.set_xlabel("")
+        ax.set_ylabel("Baseline HR (bpm)", fontweight="bold")
         ax.set_axisbelow(True)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         fig.tight_layout()
         stem = f"{FIG4_DIR}/fig4a_baseline_hr"
