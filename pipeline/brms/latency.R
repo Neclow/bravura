@@ -15,7 +15,10 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_latency_long.csv"))
 
-df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
+df$Cluster <- factor(
+  df$Cluster,
+  levels = c("Non-aggressive", "Proactive", "Reactive")
+)
 df$opponent <- factor(df$opponent)
 df$subject <- factor(df$subject)
 
@@ -60,7 +63,13 @@ cat("Model fitted\n\n")
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
-save_diagnostics(fit, "lognormal RI (shock latency)", out_dir)
+save_diagnostics(
+  fit,
+  "lognormal RI (shock latency)",
+  out_dir,
+  ppc_labs = labs(x = "Latency to shock (s)", y = "Density"),
+  ppc_xlim = c(0, 10)
+)
 
 # ── Posterior predicted means ────────────────────────────────────────────────
 
@@ -90,7 +99,11 @@ pred_summary <- epred_long %>%
     Q97.5 = quantile(latency, 0.975),
     .groups = "drop"
   )
-write.csv(pred_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
+write.csv(
+  pred_summary,
+  file.path(out_dir, "predicted_means.csv"),
+  row.names = FALSE
+)
 cat("Predicted means (response scale):\n")
 print(pred_summary)
 
@@ -120,6 +133,10 @@ bf_results <- bf_table(em_post, em_prior)
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
 print(bf_results, digits = 3)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 cat("\nDone. Outputs saved to", out_dir, "\n")

@@ -13,7 +13,7 @@ df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "psap_ilr.csv"))
 
 # ── Model ────────────────────────────────────────────────────────────────────
 
-formula <- bf(cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 |p| Subject))
+formula <- bf(cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 | p | Subject))
 
 fit <- fit_or_load(
   name = "fit_dirichlet",
@@ -40,7 +40,13 @@ cat("\n\nPrior summary:\n")
 print(prior_summary(fit))
 sink()
 
-png(file.path(dirichlet_dir, "trace_plots.png"), width = 10, height = 8, units = "in", res = 300)
+png(
+  file.path(dirichlet_dir, "trace_plots.png"),
+  width = 10,
+  height = 8,
+  units = "in",
+  res = 300
+)
 print(plot(fit, ask = FALSE))
 dev.off()
 
@@ -91,8 +97,16 @@ write.csv(
   as.data.frame(fixef(fit)),
   file.path(out_dir, "fit_dirichlet_fixed_effects.csv")
 )
-write.csv(all_epred, file.path(out_dir, "posterior_epred.csv"), row.names = FALSE)
-write.csv(all_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
+write.csv(
+  all_epred,
+  file.path(out_dir, "posterior_epred.csv"),
+  row.names = FALSE
+)
+write.csv(
+  all_summary,
+  file.path(out_dir, "predicted_means.csv"),
+  row.names = FALSE
+)
 write.csv(bf_table, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
 
 cat("\nDone. Outputs saved to", out_dir, "\n")

@@ -14,8 +14,14 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 trials <- read.csv(file.path(DEFAULT_DATA_DIR, "shared", "trial_events.csv"))
 
 # Get included subjects from behav_Xa (N=114) and behav_Xb (N=37)
-included_a <- rownames(read.csv(file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"), row.names = 1))
-included_b <- rownames(read.csv(file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"), row.names = 1))
+included_a <- rownames(read.csv(
+  file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"),
+  row.names = 1
+))
+included_b <- rownames(read.csv(
+  file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"),
+  row.names = 1
+))
 included <- c(included_a, included_b)
 trials <- trials %>% filter(subject %in% included)
 trials$cohort <- factor(trials$cohort)
@@ -37,10 +43,17 @@ trials <- trials %>% filter(duration > 0, duration <= 30)
 cat("Decision counts:\n")
 print(table(trials$decision))
 cat("\nDuration summary by decision:\n")
-print(trials %>% group_by(decision) %>% summarise(
-  n = n(), mean = mean(duration), sd = sd(duration),
-  median = median(duration), .groups = "drop"
-))
+print(
+  trials %>%
+    group_by(decision) %>%
+    summarise(
+      n = n(),
+      mean = mean(duration),
+      sd = sd(duration),
+      median = median(duration),
+      .groups = "drop"
+    )
+)
 
 # ── Formula ──────────────────────────────────────────────────────────────────
 # Trial duration ~ decision type, random intercept by subject
@@ -95,7 +108,14 @@ fit_prior <- fit_or_load(
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
-save_diagnostics(fit, "Student-t RI (decision * cohort)", out_dir, prior_fit = fit_prior)
+save_diagnostics(
+  fit,
+  "Student-t RI (decision * cohort)",
+  out_dir,
+  prior_fit = fit_prior,
+  ppc_labs = labs(x = "Trial duration (s)", y = "Density"),
+  ppc_xlim = c(0, 30)
+)
 
 # ── Predicted means per decision ─────────────────────────────────────────────
 
@@ -118,21 +138,36 @@ pred_summary <- ppe_long %>%
     .groups = "drop"
   )
 
-write.csv(pred_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
-write.csv(ppe_long, file.path(out_dir, "posterior_epred.csv"), row.names = FALSE)
+write.csv(
+  pred_summary,
+  file.path(out_dir, "predicted_means.csv"),
+  row.names = FALSE
+)
+write.csv(
+  ppe_long,
+  file.path(out_dir, "posterior_epred.csv"),
+  row.names = FALSE
+)
 
 # ── Pairwise contrasts with Bayes Factors (Savage-Dickey) ────────────────────
 
 em_posterior <- emmeans(fit, pairwise ~ decision | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ decision | cohort)
 
-bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
+bf_obj <- bayesfactor_parameters(
+  em_posterior$contrasts,
+  prior = em_prior$contrasts
+)
 
 bf_results <- bf_table(em_posterior, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
 print(bf_results, digits = 3)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 cat("Done. Outputs saved to", out_dir, "\n")

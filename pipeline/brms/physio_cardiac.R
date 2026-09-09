@@ -18,7 +18,10 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "physio_cardiac_long.csv"))
 
-df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
+df$Cluster <- factor(
+  df$Cluster,
+  levels = c("Non-aggressive", "Proactive", "Reactive")
+)
 df$block <- factor(df$block, levels = c("1.1", "1.2", "2.1", "2.2"))
 df$subject <- factor(df$subject)
 
@@ -33,8 +36,9 @@ cat("  DVs: HR, HRV_RC1 (power), HRV_RC2 (vagal), HRV_RC3 (entropy)\n\n")
 
 formula_mv <- bf(
   mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~
-    Cluster * block + (1 |p| subject)
-) + set_rescor(TRUE)
+    Cluster * block + (1 | p | subject)
+) +
+  set_rescor(TRUE)
 
 # ── Priors ───────────────────────────────────────────────────────────────────
 
@@ -89,7 +93,10 @@ sink()
 
 png(
   file.path(out_dir, "trace_plots.png"),
-  width = 14, height = 10, units = "in", res = 300
+  width = 14,
+  height = 10,
+  units = "in",
+  res = 300
 )
 plot(fit, ask = FALSE)
 dev.off()
@@ -110,10 +117,16 @@ for (i in seq_along(dvs)) {
 contrasts_df <- do.call(rbind, all_contrasts)
 
 cat("Pairwise contrasts (all DVs):\n")
-print(contrasts_df[, c("DV", "block", "contrast", "estimate", "Q2.5", "Q97.5")],
-      digits = 3)
+print(
+  contrasts_df[, c("DV", "block", "contrast", "estimate", "Q2.5", "Q97.5")],
+  digits = 3
+)
 
-write.csv(contrasts_df, file.path(out_dir, "pairwise_contrasts.csv"), row.names = FALSE)
+write.csv(
+  contrasts_df,
+  file.path(out_dir, "pairwise_contrasts.csv"),
+  row.names = FALSE
+)
 
 # ── Fixed effects per DV ─────────────────────────────────────────────────────
 

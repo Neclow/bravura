@@ -13,7 +13,9 @@ df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_long.csv"))
 # ── Formulas ─────────────────────────────────────────────────────────────────
 
 formula_ri <- shocks | trials(15) ~ Cluster * opponent + (1 | subject)
-formula_rs <- shocks | trials(15) ~ Cluster * opponent + (1 + opponent | subject)
+formula_rs <- shocks | trials(15) ~ Cluster *
+  opponent +
+  (1 + opponent | subject)
 
 # ── Priors ───────────────────────────────────────────────────────────────────
 # Intercept: logit scale, N(0, 2) centres on 50% with broad coverage
@@ -143,7 +145,18 @@ fit_prior <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-save_diagnostics(best, best_label, out_dir, prior_fit = fit_prior)
+save_diagnostics(
+  best,
+  best_label,
+  out_dir,
+  prior_fit = fit_prior,
+  ppc_labs = labs(
+    x = "Number of shocks delivered\nagainst one opponent [0-15]",
+    y = "Density"
+  ),
+  ppc_group = "Cluster",
+  ppc_width = 8
+)
 
 png(
   file.path(out_dir, "posterior_predictive_check_grouped.png"),
@@ -203,13 +216,20 @@ write.csv(
 em_posterior <- emmeans(best, pairwise ~ Cluster | opponent)
 em_prior <- emmeans(fit_prior, pairwise ~ Cluster | opponent)
 
-bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
+bf_obj <- bayesfactor_parameters(
+  em_posterior$contrasts,
+  prior = em_prior$contrasts
+)
 
 bf_results <- bf_table(em_posterior, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
 print(bf_results, digits = 3)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 cat("Done. Outputs saved to", out_dir, "\n")

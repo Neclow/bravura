@@ -4,6 +4,20 @@ library(dplyr)
 library(tidyr)
 library(emmeans)
 library(bayestestR)
+library(ggplot2)
+
+# ── Theme (matches .matplotlib/paper.mplstyle) ─────────────────────────────
+
+PAPER_THEME <- theme_minimal(base_size = 9, base_family = "Arial") +
+  theme(
+    text = element_text(face = "bold"),
+    axis.text = element_text(face = "bold"),
+    legend.text = element_text(face = "bold"),
+    panel.grid.major = element_blank(),
+    panel.grid.minor = element_blank(),
+    axis.line = element_line(linewidth = 0.4),
+    legend.background = element_blank()
+  )
 
 # ── Constants ────────────────────────────────────────────────────────────────
 
@@ -46,37 +60,47 @@ kfold_or_load <- function(fit, name, out_dir, K = 10, overwrite = FALSE) {
   }
 }
 
-save_diagnostics <- function(best, best_label, out_dir, prior_fit = NULL) {
+save_diagnostics <- function(best, best_label, out_dir, prior_fit = NULL,
+                             ppc_labs = NULL, ppc_xlim = NULL,
+                             ppc_group = NULL, ppc_width = 6) {
   sink(file.path(out_dir, "summary.txt"))
   cat(paste0("Model: ", best_label, "\n\n"))
-  summary(best)
+  print(summary(best))
   cat("\n\nPrior summary:\n")
-  prior_summary(best)
+  print(prior_summary(best))
   sink()
+
+  ppc_extras <- list(PAPER_THEME)
+  if (!is.null(ppc_labs))  ppc_extras <- c(ppc_extras, list(ppc_labs))
+  if (!is.null(ppc_xlim))  ppc_extras <- c(ppc_extras, list(coord_cartesian(xlim = ppc_xlim)))
+
+  ppc_type <- if (!is.null(ppc_group)) "dens_overlay_grouped" else "dens_overlay"
+  ppc_args <- list(object = best, ndraws = 100, type = ppc_type)
+  if (!is.null(ppc_group)) ppc_args$group <- ppc_group
+  if (!is.null(ppc_group)) {
+    ppc_extras <- c(ppc_extras, list(theme(panel.spacing = unit(1, "lines"))))
+  }
 
   if (!is.null(prior_fit)) {
     tryCatch({
-      png(
-        file.path(out_dir, "prior_predictive_check.png"),
-        width = 6, height = 4, units = "in", res = 300
-      )
-      print(pp_check(prior_fit, ndraws = 100))
-      dev.off()
+      p <- pp_check(prior_fit, ndraws = 100) + PAPER_THEME
+      ggsave(file.path(out_dir, "prior_predictive_check.png"),
+             p, width = 6, height = 4, dpi = 300)
+      ggsave(file.path(out_dir, "prior_predictive_check.pdf"),
+             p, width = 6, height = 4, device = cairo_pdf)
     }, error = function(e) {
-      try(dev.off(), silent = TRUE)
       cat("Skipping prior pp_check:", conditionMessage(e), "\n")
     })
   }
 
   tryCatch({
-    png(
-      file.path(out_dir, "posterior_predictive_check.png"),
-      width = 6, height = 4, units = "in", res = 300
-    )
-    print(pp_check(best, ndraws = 100))
-    dev.off()
+    p <- do.call(pp_check, ppc_args)
+    for (layer in ppc_extras) p <- p + layer
+    ggsave(file.path(out_dir, "posterior_predictive_check.png"),
+           p, width = ppc_width, height = 4, dpi = 300)
+    ggsave(file.path(out_dir, "posterior_predictive_check.pdf"),
+           p, width = ppc_width, height = 4, device = cairo_pdf)
   }, error = function(e) {
-    try(dev.off(), silent = TRUE)
     cat("Skipping posterior pp_check:", conditionMessage(e), "\n")
   })
 

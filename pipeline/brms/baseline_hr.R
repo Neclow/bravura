@@ -13,12 +13,17 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 # ── Load data ────────────────────────────────────────────────────────────────
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "baseline_hr.csv"))
-df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
+df$Cluster <- factor(
+  df$Cluster,
+  levels = c("Non-aggressive", "Proactive", "Reactive")
+)
 
 cat("N:", nrow(df), "\n")
 cat("Per cluster:", table(df$Cluster), "\n")
 cat("Mean HR_Pre per cluster:\n")
-print(tapply(df$HR_Pre, df$Cluster, function(x) round(c(mean = mean(x), sd = sd(x)), 2)))
+print(tapply(df$HR_Pre, df$Cluster, function(x) {
+  round(c(mean = mean(x), sd = sd(x)), 2)
+}))
 cat("\n")
 
 # ── Fit model ────────────────────────────────────────────────────────────────
@@ -71,9 +76,16 @@ em_prior <- emmeans(fit_prior, pairwise ~ Cluster)
 bf_results <- bf_table(em_post, em_prior)
 
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
-print(bf_results[, c("contrast", "estimate", "Q2.5", "Q97.5", "BF10", "excl_zero")], digits = 3)
+print(
+  bf_results[, c("contrast", "estimate", "Q2.5", "Q97.5", "BF10", "excl_zero")],
+  digits = 3
+)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 # ── Posterior predicted means per cluster ─────────────────────────────────────
 
@@ -98,12 +110,22 @@ pred_summary <- epred_long %>%
     Q97.5 = quantile(HR_Pre, 0.975),
     .groups = "drop"
   )
-write.csv(pred_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
+write.csv(
+  pred_summary,
+  file.path(out_dir, "predicted_means.csv"),
+  row.names = FALSE
+)
 cat("\nPredicted means:\n")
 print(pred_summary)
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
-save_diagnostics(fit, "student-t baseline HR", out_dir, prior_fit = fit_prior)
+save_diagnostics(
+  fit,
+  "student-t baseline HR",
+  out_dir,
+  prior_fit = fit_prior,
+  ppc_labs = labs(x = "Baseline HR (bpm)", y = "Density")
+)
 
 cat("\nDone. Outputs saved to", out_dir, "\n")

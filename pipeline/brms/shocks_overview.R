@@ -30,9 +30,15 @@ df$cohort <- factor(df$cohort)
 cat("N subjects per cohort:\n")
 print(df %>% distinct(subject, cohort) %>% count(cohort))
 cat("\nMean shocks per opponent x cohort:\n")
-print(df %>% group_by(cohort, opponent) %>% summarise(
-  mean = mean(shocks), sd = sd(shocks), .groups = "drop"
-))
+print(
+  df %>%
+    group_by(cohort, opponent) %>%
+    summarise(
+      mean = mean(shocks),
+      sd = sd(shocks),
+      .groups = "drop"
+    )
+)
 
 # ── Formula ──────────────────────────────────────────────────────────────────
 # Population-level opponent effect (no Cluster), random intercept by subject
@@ -83,7 +89,16 @@ fit_prior <- fit_or_load(
 
 # ── Diagnostics ──────────────────────────────────────────────────────────────
 
-save_diagnostics(fit, "binomial RI (opponent * cohort)", out_dir, prior_fit = fit_prior)
+save_diagnostics(
+  fit,
+  "binomial RI (opponent * cohort)",
+  out_dir,
+  prior_fit = fit_prior,
+  ppc_labs = labs(
+    x = "Number of shocks delivered\nagainst one opponent [0-15]",
+    y = "Density"
+  )
+)
 
 # ── Predicted means per opponent ─────────────────────────────────────────────
 
@@ -106,21 +121,36 @@ pred_summary <- ppe_long %>%
     .groups = "drop"
   )
 
-write.csv(pred_summary, file.path(out_dir, "predicted_means.csv"), row.names = FALSE)
-write.csv(ppe_long, file.path(out_dir, "posterior_epred.csv"), row.names = FALSE)
+write.csv(
+  pred_summary,
+  file.path(out_dir, "predicted_means.csv"),
+  row.names = FALSE
+)
+write.csv(
+  ppe_long,
+  file.path(out_dir, "posterior_epred.csv"),
+  row.names = FALSE
+)
 
 # ── Opponent effect BF (Savage-Dickey) ───────────────────────────────────────
 
 em_posterior <- emmeans(fit, pairwise ~ opponent | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ opponent | cohort)
 
-bf_obj <- bayesfactor_parameters(em_posterior$contrasts, prior = em_prior$contrasts)
+bf_obj <- bayesfactor_parameters(
+  em_posterior$contrasts,
+  prior = em_prior$contrasts
+)
 
 bf_results <- bf_table(em_posterior, em_prior)
 
 cat("\nOpponent contrast (Savage-Dickey BF):\n")
 print(bf_results, digits = 3)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 cat("Done. Outputs saved to", out_dir, "\n")

@@ -10,7 +10,10 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long.csv"))
 
-df$Cluster <- factor(df$Cluster, levels = c("Non-aggressive", "Proactive", "Reactive"))
+df$Cluster <- factor(
+  df$Cluster,
+  levels = c("Non-aggressive", "Proactive", "Reactive")
+)
 df$block <- factor(df$block, levels = c("1.1", "1.2", "2.1", "2.2"))
 df$subject <- factor(df$subject)
 
@@ -156,7 +159,16 @@ fit_prior <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-save_diagnostics(best, best_label, out_dir, prior_fit = fit_prior)
+save_diagnostics(
+  best,
+  best_label,
+  out_dir,
+  prior_fit = fit_prior,
+  ppc_labs = labs(x = expression(Delta * "HR (bpm)"), y = "Density"),
+  ppc_xlim = c(-20, 40),
+  ppc_group = "Cluster",
+  ppc_width = 8
+)
 
 png(
   file.path(out_dir, "posterior_predictive_check_grouped.png"),
@@ -217,6 +229,10 @@ bf_results <- bf_table(em_posterior, em_prior)
 cat("\nPairwise contrasts (Savage-Dickey BF):\n")
 print(bf_results, digits = 3)
 
-write.csv(bf_results, file.path(out_dir, "bayes_factors.csv"), row.names = FALSE)
+write.csv(
+  bf_results,
+  file.path(out_dir, "bayes_factors.csv"),
+  row.names = FALSE
+)
 
 cat("Done. Outputs saved to", out_dir, "\n")
