@@ -166,8 +166,9 @@ def grid_search(Xa_scaled, out_dir):
 
     pivot = grid.pivot(index="k", columns="solver", values="silhouette").round(3)
     print(pivot.to_markdown())
-    grid.round(3).to_csv(f"{out_dir}/grid_k_solver.csv", index=False)
-    print(f"Saved: {out_dir}/grid_k_solver.csv")
+    out_path = f"{out_dir}/grid_k_solver.csv"
+    grid.round(3).to_csv(out_path, index=False)
+    print(f"Saved: {out_path}")
     print()
 
     # 1b: pick best solver (highest mean silhouette), print full ablate_k
@@ -217,8 +218,9 @@ def metric_ablation(bma_a, out_dir, k, solver):
         .round(3)
     )
     print(sens_X_out.to_markdown())
-    sens_X_out.to_csv(f"{out_dir}/ablate_metric.csv")
-    print(f"Saved: {out_dir}/ablate_metric.csv")
+    out_path = f"{out_dir}/ablate_metric.csv"
+    sens_X_out.to_csv(out_path, index=False)
+    print(f"Saved: {out_path}")
     print()
 
 
