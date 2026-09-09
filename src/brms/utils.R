@@ -6,7 +6,7 @@ library(emmeans)
 library(bayestestR)
 library(ggplot2)
 
-# ── Theme (matches .matplotlib/paper.mplstyle) ─────────────────────────────
+# Theme (matches .matplotlib/paper.mplstyle)
 
 PAPER_THEME <- theme_minimal(base_size = 9, base_family = "Arial") +
   theme(
@@ -19,7 +19,7 @@ PAPER_THEME <- theme_minimal(base_size = 9, base_family = "Arial") +
     legend.background = element_blank()
   )
 
-# ── Constants ────────────────────────────────────────────────────────────────
+# Constants
 
 DEFAULT_DATA_DIR <- "data_v2"
 DEFAULT_BRMS_DIR <- file.path(DEFAULT_DATA_DIR, "brms")
@@ -32,7 +32,7 @@ options(mc.cores = CORES)
 ITER <- 4000
 WARMUP <- 2000
 
-# ── Helpers ──────────────────────────────────────────────────────────────────
+# Helpers
 
 fit_or_load <- function(name, out_dir, ..., overwrite = FALSE) {
   path <- file.path(out_dir, paste0(name, ".rds"))
@@ -60,9 +60,16 @@ kfold_or_load <- function(fit, name, out_dir, K = 10, overwrite = FALSE) {
   }
 }
 
-save_diagnostics <- function(best, best_label, out_dir, prior_fit = NULL,
-                             ppc_labs = NULL, ppc_xlim = NULL,
-                             ppc_group = NULL, ppc_width = 6) {
+save_diagnostics <- function(
+  best,
+  best_label,
+  out_dir,
+  prior_fit = NULL,
+  ppc_labs = NULL,
+  ppc_xlim = NULL,
+  ppc_group = NULL,
+  ppc_width = 6
+) {
   sink(file.path(out_dir, "summary.txt"))
   cat(paste0("Model: ", best_label, "\n\n"))
   print(summary(best))
@@ -71,42 +78,83 @@ save_diagnostics <- function(best, best_label, out_dir, prior_fit = NULL,
   sink()
 
   ppc_extras <- list(PAPER_THEME)
-  if (!is.null(ppc_labs))  ppc_extras <- c(ppc_extras, list(ppc_labs))
-  if (!is.null(ppc_xlim))  ppc_extras <- c(ppc_extras, list(coord_cartesian(xlim = ppc_xlim)))
+  if (!is.null(ppc_labs)) {
+    ppc_extras <- c(ppc_extras, list(ppc_labs))
+  }
+  if (!is.null(ppc_xlim)) {
+    ppc_extras <- c(ppc_extras, list(coord_cartesian(xlim = ppc_xlim)))
+  }
 
-  ppc_type <- if (!is.null(ppc_group)) "dens_overlay_grouped" else "dens_overlay"
+  ppc_type <- if (!is.null(ppc_group)) {
+    "dens_overlay_grouped"
+  } else {
+    "dens_overlay"
+  }
   ppc_args <- list(object = best, ndraws = 100, type = ppc_type)
-  if (!is.null(ppc_group)) ppc_args$group <- ppc_group
+  if (!is.null(ppc_group)) {
+    ppc_args$group <- ppc_group
+  }
   if (!is.null(ppc_group)) {
     ppc_extras <- c(ppc_extras, list(theme(panel.spacing = unit(1, "lines"))))
   }
 
   if (!is.null(prior_fit)) {
-    tryCatch({
-      p <- pp_check(prior_fit, ndraws = 100) + PAPER_THEME
-      ggsave(file.path(out_dir, "prior_predictive_check.png"),
-             p, width = 6, height = 4, dpi = 300)
-      ggsave(file.path(out_dir, "prior_predictive_check.pdf"),
-             p, width = 6, height = 4, device = cairo_pdf)
-    }, error = function(e) {
-      cat("Skipping prior pp_check:", conditionMessage(e), "\n")
-    })
+    tryCatch(
+      {
+        p <- pp_check(prior_fit, ndraws = 100) + PAPER_THEME
+        ggsave(
+          file.path(out_dir, "prior_predictive_check.png"),
+          p,
+          width = 6,
+          height = 4,
+          dpi = 300
+        )
+        ggsave(
+          file.path(out_dir, "prior_predictive_check.pdf"),
+          p,
+          width = 6,
+          height = 4,
+          device = cairo_pdf
+        )
+      },
+      error = function(e) {
+        cat("Skipping prior pp_check:", conditionMessage(e), "\n")
+      }
+    )
   }
 
-  tryCatch({
-    p <- do.call(pp_check, ppc_args)
-    for (layer in ppc_extras) p <- p + layer
-    ggsave(file.path(out_dir, "posterior_predictive_check.png"),
-           p, width = ppc_width, height = 4, dpi = 300)
-    ggsave(file.path(out_dir, "posterior_predictive_check.pdf"),
-           p, width = ppc_width, height = 4, device = cairo_pdf)
-  }, error = function(e) {
-    cat("Skipping posterior pp_check:", conditionMessage(e), "\n")
-  })
+  tryCatch(
+    {
+      p <- do.call(pp_check, ppc_args)
+      for (layer in ppc_extras) {
+        p <- p + layer
+      }
+      ggsave(
+        file.path(out_dir, "posterior_predictive_check.png"),
+        p,
+        width = ppc_width,
+        height = 4,
+        dpi = 300
+      )
+      ggsave(
+        file.path(out_dir, "posterior_predictive_check.pdf"),
+        p,
+        width = ppc_width,
+        height = 4,
+        device = cairo_pdf
+      )
+    },
+    error = function(e) {
+      cat("Skipping posterior pp_check:", conditionMessage(e), "\n")
+    }
+  )
 
   png(
     file.path(out_dir, "trace_plots.png"),
-    width = 10, height = 8, units = "in", res = 300
+    width = 10,
+    height = 8,
+    units = "in",
+    res = 300
   )
   print(plot(best))
   dev.off()
@@ -133,7 +181,7 @@ bf_table <- function(em_posterior, em_prior) {
     )
 }
 
-# ── Pairwise BF table from posterior draws ──────────────────────────────────
+# Pairwise BF table from posterior draws
 # epred: data.frame with columns for grouping vars, a value column, and .draw
 # group_col: name of the column with group labels (e.g., "Cluster")
 # value_col: name of the column with posterior draws (e.g., "proportion")
@@ -167,7 +215,11 @@ pairwise_bf <- function(epred, group_col, value_col, by_cols, pairs = NULL) {
       diff_draws <- draws1 - draws2
       p_pos <- mean(diff_draws > 0)
       p_neg <- mean(diff_draws < 0)
-      bf10 <- if (min(p_pos, p_neg) > 0) max(p_pos, p_neg) / min(p_pos, p_neg) else Inf
+      bf10 <- if (min(p_pos, p_neg) > 0) {
+        max(p_pos, p_neg) / min(p_pos, p_neg)
+      } else {
+        Inf
+      }
 
       row <- by_vals
       row$contrast <- paste0(pair[1], " - ", pair[2])
