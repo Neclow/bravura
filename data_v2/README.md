@@ -8,7 +8,7 @@ Paths are configured in `src/_config.py` (`DEFAULT_DATA_DIR = "data_v2"`).
 
 ### `raw/`
 
-Original data from AggressionProjectDataShare.
+Original data.
 
 | Path | Description |
 | ---- | ----------- |
@@ -32,7 +32,7 @@ Files shared across both cohorts.
 
 ### `cohort_a/`
 
-Cohort A (N=126, 114 after exclusion, 112 for physiology).
+Cohort A.
 
 #### Task and questionnaire data
 
@@ -41,8 +41,6 @@ Cohort A (N=126, 114 after exclusion, 112 for physiology).
 | `aggroPerformance.xlsx` | Per-trial shock decisions, latencies, choices (126 subjects x 30 trials) |
 | `latPerformance.xlsx` | Clean latency data (124 subjects) |
 | `beliefs.xlsx` | Belief ratings per opponent (0–10 scale) |
-| `physPerformance.xlsx` | Cardiac features (HR, HRV) across experimental blocks |
-| `physPerformanceAll.xlsx` | Full physiological features including respiration and EDA (archive) |
 
 #### VBA model fitting
 
@@ -77,7 +75,7 @@ Produced by `pipeline/vba/` (MATLAB). See [VBA model outputs](#vba-model-outputs
 
 ### `cohort_b/`
 
-Cohort B (N=44, 37 after exclusion). Same structure as `cohort_a/`. Beliefs on 0–5 scale (rescaled to 0–10 in pipeline).
+Cohort B. Same structure as `cohort_a/`. Beliefs on 0–5 scale (rescaled to 0–10 in pipeline).
 
 Does not contain `mc_coefs.npz`, `corr_preds.mat`, or `cov_stats.mat` (Cohort B is projected onto Cohort A centroids, not independently clustered).
 
