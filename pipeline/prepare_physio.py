@@ -7,8 +7,6 @@ Phase 2: Delta HR:
     delta_hr_long_b.csv.
 Phase 3: Cardiac multivariate:
     Delta HR + varimax-rotated HRV RC1-3 → physio_cardiac_long.csv.
-Phase 4: Hormones:
-    Cortisol + testosterone by cluster → hormones.csv (Cohort A only).
 """
 
 import os
@@ -52,12 +50,6 @@ HRV_FEATS = [
 ALL_BLOCKS = ["Pre", "Op1T1", "Op1T2", "Op2T1", "Op2T2"]
 TASK_BLOCKS = ["Op1T1", "Op1T2", "Op2T1", "Op2T2"]
 TASK_BLOCK_LABELS = ["1.1", "1.2", "2.1", "2.2"]
-
-# Hormone constants
-
-CORT_COLS = [f"Cortisolgdl_x{i}" for i in range(1, 6)]
-TC_UNIT_FACTOR = 0.0001  # pg/ml -> ug/dl so testosterone and cortisol share units
-
 
 # Data loading
 
@@ -275,59 +267,6 @@ def export_cardiac(physio, labels, out_dir):
     print()
 
 
-# Phase 4: Hormones
-
-
-def export_hormones(out_dir):
-    """Export cortisol + testosterone by cluster (Cohort A only).
-
-    Reads raw salivary cortisol and testosterone data, merges with behavioural
-    cluster labels, and computes derived variables (T:C ratio, circadian-
-    corrected stress reactivity).
-    """
-    behav = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col=0)
-    cort = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/raw/CortisolData.xlsx", sheet_name="Sheet1"
-    ).set_index("Subject")
-    testo = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/raw/VR main-testosterone-september2019-longxlsx.xlsx"
-    )
-
-    testo.columns = ["Sample", "T"]
-    testo["Subject"] = testo["Sample"].str.extract(r"(P\d+)", expand=False)
-    testo_mean = testo.groupby("Subject")["T"].mean()
-
-    subjects = behav.index.intersection(cort.index)
-    cort_mean = cort.loc[subjects, CORT_COLS].mean(axis=1)
-
-    df = pd.DataFrame(
-        {
-            "subject": subjects,
-            "Cluster": behav.loc[subjects, "Cluster"].values,
-            "Condition": cort.loc[subjects, "Condition"].values,
-            "TotalCort": cort.loc[subjects, CORT_COLS].sum(axis=1).values,
-            "Cmean": cort_mean.values,
-            "CortBase": cort.loc[subjects, "CortBase"].values,
-            "StressChange": cort.loc[subjects, "StressChange"].values,
-            "StressChange_corrected": cort.loc[
-                subjects, "StressChange_corrected"
-            ].values,
-            "hour": cort.loc[subjects, "hour"].values,
-            "Testo_mean": testo_mean.reindex(subjects).values,
-            "TC_ratio": (testo_mean.reindex(subjects).values * TC_UNIT_FACTOR)
-            / cort_mean.values,
-        }
-    )
-    df = df.dropna(subset=["Testo_mean"])
-
-    path = f"{out_dir}/hormones.csv"
-    df.to_csv(path, index=False)
-    print(f"Saved {df.shape} to {path}")
-    cols = ["TotalCort", "StressChange_corrected", "Testo_mean", "TC_ratio"]
-    print(df.groupby("Cluster")[cols].mean().round(3))
-    print()
-
-
 # Main
 
 if __name__ == "__main__":
@@ -349,5 +288,3 @@ if __name__ == "__main__":
     print("=== Phase 3: Cardiac (HR + varimax HRV RC1-3) ===")
     export_cardiac(physio_a, labels_a, out)
 
-    print("=== Phase 4: Hormones ===")
-    export_hormones(out)

@@ -14,8 +14,6 @@ Original data.
 | ---- | ----------- |
 | `MatlabEvents/` | Per-subject BioPac event files (`.mat`, one per Cohort B subject) |
 | `psap/` | PSAP task data (`.mat`, one per Cohort A subject) |
-| `CortisolData.xlsx` | Salivary cortisol concentrations |
-| `VR main-testosterone-september2019-longxlsx.xlsx` | Salivary testosterone concentrations |
 | `additional.xlsx` | Additional participant metadata (PSAP button presses, questionnaires) |
 | `Markers legend.xlsx` | BioPac event marker definitions |
 
@@ -141,7 +139,6 @@ Produced by `pixi run prepare_physio`.
 | `delta_hr_long.csv` | `brms_delta_hr` |
 | `delta_hr_long_b.csv` | `brms_delta_hr_rep` |
 | `physio_cardiac_long.csv` | `brms_physio_cardiac` |
-| `hormones.csv` | `brms_hormones` |
 
 ## Bayesian model outputs
 
@@ -160,7 +157,6 @@ Each subdirectory corresponds to a brms script in `pipeline/brms/` and stores ca
 | `latency/` | `latency.R` | Log-normal shock latency model |
 | `physio_cardiac/` | `physio_cardiac.R` | Multivariate cardiac model (HR + HRV RCs) |
 | `trial_duration/` | `trial_duration.R` | Trial duration by cluster |
-| `physio_hormones/` | `hormones.R` | Cortisol/testosterone models |
 
 #### Standard outputs per model
 
@@ -174,12 +170,3 @@ Each subdirectory corresponds to a brms script in `pipeline/brms/` and stores ca
 - `trace_plots.png`: MCMC trace and density plots
 
 Some models also save `fixed_effects.csv`, `random_effects.csv`, `model_comparison.txt`, or `posterior_draws.csv`.
-
-#### `physio_hormones/` subdirectories
-
-| Subdirectory | Outcome |
-| ------------ | ------- |
-| `TotalCort/` | Total cortisol by cluster |
-| `Testo_mean/` | Mean testosterone by cluster |
-| `StressChange_corrected/` | Stress-corrected cortisol change by cluster |
-| `TC_ratio/` | Testosterone/cortisol ratio by cluster |

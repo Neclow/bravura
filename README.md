@@ -48,7 +48,7 @@ pipeline runs in six stages:
 3. **Behavioural data preparation:** reshape shock, PSAP, and latency data for
    modelling
 4. **Physiological data preparation:** baseline HR, delta HR, HRV components,
-   multivariate physio, hormones
+   multivariate physio
 5. **Bayesian models:** brms regression models (shocks, PSAP, delta HR,
    latency, cardiac)
 6. **Plots:** publication figures

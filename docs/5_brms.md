@@ -45,8 +45,6 @@ See the [data README](../data_v2/README.md#brms) for the full output listing.
 | `pixi run brms_latency` | `latency.R` | `shock_latency_long.csv` | `latency ~ Cluster * opponent + (1 \| subject)` | lognormal |
 | `pixi run brms_physio_cardiac` | `physio_cardiac.R` | `physio_cardiac_long.csv` | `mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~ Cluster * block + (1 \|p\| subject)` | student |
 | `pixi run brms_trial_duration` | `trial_duration.R` | `trial_events.csv` | `duration ~ decision * cohort + (1 \| subject)` | student |
-| `pixi run brms_hormones` | `hormones.R` | `hormones.csv` | `{var} ~ Cluster + Condition` | student |
-
 All outputs are written to `data_v2/brms/{model_name}/`.
 
 ## Model details
@@ -89,10 +87,3 @@ Both cohorts combined. Removes extreme durations (>30s). Decisions coded as
 Shock, Enlarge, or Nothing. Uses 16000 iterations / 8000 warmup with
 `adapt_delta = 0.99`, `max_treedepth = 15`. Explicitly models degrees of
 freedom (nu ~ Gamma(2, 0.1)).
-
-### hormones.R
-
-Exploratory models (output to `physio_hormones/`). Fits one Student-t model
-per hormone variable (TotalCort, StressChange_corrected, Testo_mean,
-TC_ratio). Condition (stress/control) included to marginalise over cortisol
-sampling differences. Each variable has tailored prior scales.

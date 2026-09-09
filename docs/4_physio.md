@@ -6,7 +6,7 @@ Computes physiological features and exports long-format CSVs for brms models
 - **Command:** `pixi run prepare_physio`
 - **Script:** `pipeline/prepare_physio.py`
 - **Requires:** `behav_Xa.csv`, `behav_Xb.csv` from clustering
-  ([2_clustering.md](2_clustering.md)); raw physiology and hormone data.
+  ([2_clustering.md](2_clustering.md)); raw physiology data.
 
 ## Exclusions
 
@@ -59,19 +59,3 @@ Delta scores are computed as task-block minus Pre for each component.
 - **Columns:** `subject`, `Cluster`, `block`, `HR`, `HRV_RC1`, `HRV_RC2`, `HRV_RC3`
 - **Consumed by:** `brms_physio_cardiac`
 - **Note:** Cohort A only.
-
-## Phase 4: Hormones
-
-Salivary cortisol and testosterone by cluster. Computes mean cortisol, mean
-testosterone, T:C ratio (testosterone converted pg/ml to ug/dl), and
-circadian-corrected stress reactivity.
-
-- **Inputs:** `data_v2/raw/CortisolData.xlsx`,
-  `data_v2/raw/VR main-testosterone-september2019-longxlsx.xlsx`,
-  `data_v2/processed/behav_Xa.csv`
-- **Outputs:** `data_v2/processed/hormones.csv`
-- **Columns:** `subject`, `Cluster`, `Condition`, `TotalCort`, `Cmean`,
-  `CortBase`, `StressChange`, `StressChange_corrected`, `hour`, `Testo_mean`,
-  `TC_ratio`
-- **Consumed by:** `brms_hormones`
-- **Note:** Cohort A only. Subjects with missing testosterone are dropped.
