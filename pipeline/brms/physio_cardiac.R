@@ -1,11 +1,11 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 # Multivariate Bayesian model for cardiovascular DVs:
-#   HR + 3 varimax-rotated HRV components:
-#     RC1 = overall HRV power (SDNN, SD2, TRI, ttlpwr)
-#     RC2 = vagal/parasympathetic (SD1SD2, hf, lfhf, RMSSD)
-#     RC3 = complexity/entropy (SampEn, ApEn, rrHRV)
+#  HR + 3 varimax-rotated HRV components:
+#    RC1 = overall HRV power (SDNN, SD2, TRI, ttlpwr)
+#    RC2 = vagal/parasympathetic (SD1SD2, hf, lfhf, RMSSD)
+#    RC3 = complexity/entropy (SampEn, ApEn, rrHRV)
 # Student-t family, Cluster × block + (1|p|subject), residual correlations.
 
 args <- commandArgs(trailingOnly = TRUE)
@@ -14,7 +14,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "physio_cardiac")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Load data ────────────────────────────────────────────────────────────────
+# Load data
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "physio_cardiac_long.csv"))
 
@@ -32,7 +32,7 @@ cat("  Blocks:", levels(df$block), "\n")
 cat("  Observations:", nrow(df), "\n")
 cat("  DVs: HR, HRV_RC1 (power), HRV_RC2 (vagal), HRV_RC3 (entropy)\n\n")
 
-# ── Formula ──────────────────────────────────────────────────────────────────
+# Formula
 
 formula_mv <- bf(
   mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~
@@ -40,7 +40,7 @@ formula_mv <- bf(
 ) +
   set_rescor(TRUE)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 
 priors <- c(
   prior(normal(5, 5), class = "Intercept", resp = "HR"),
@@ -62,7 +62,7 @@ priors <- c(
   prior(lkj(2), class = "rescor")
 )
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 fit <- fit_or_load(
   "fit_cardiac_varimax",
@@ -82,7 +82,7 @@ fit <- fit_or_load(
 
 cat("Model fitted\n\n")
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 sink(file.path(out_dir, "summary.txt"))
 cat("Multivariate student-t RI model (HR + 3 varimax HRV RCs)\n\n")
@@ -101,7 +101,7 @@ png(
 plot(fit, ask = FALSE)
 dev.off()
 
-# ── Per-DV emmeans contrasts ─────────────────────────────────────────────────
+# Per-DV emmeans contrasts
 
 dvs <- c("HR", "HRVRC1", "HRVRC2", "HRVRC3")
 dv_labels <- c("HR", "HRV_RC1", "HRV_RC2", "HRV_RC3")
@@ -128,7 +128,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Fixed effects per DV ─────────────────────────────────────────────────────
+# Fixed effects per DV
 
 for (i in seq_along(dvs)) {
   fe <- fixef(fit, resp = dvs[i])

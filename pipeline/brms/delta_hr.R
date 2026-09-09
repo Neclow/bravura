@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
@@ -23,13 +23,13 @@ cat("  Clusters:", levels(df$Cluster), "\n")
 cat("  Blocks:", levels(df$block), "\n")
 cat("  Observations:", nrow(df), "\n\n")
 
-# ── Formulas ─────────────────────────────────────────────────────────────────
+# Formulas
 # Mixed ANOVA equivalent: Cluster (between) × block (within) + random intercepts
 
 formula_ri <- delta_hr ~ Cluster * block + (1 | subject)
 formula_rs <- delta_hr ~ Cluster * block + (1 + block | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Delta HR is in bpm; typical changes are ~5-10 bpm from baseline
 
 informed_priors <- c(
@@ -47,7 +47,7 @@ informed_priors_rs <- c(
   prior(lkj(2), class = "cor")
 )
 
-# ── Model registry ──────────────────────────────────────────────────────────
+# Model registry
 
 common <- list(
   data = df,
@@ -70,11 +70,11 @@ models <- list(
   # RS model commented out: overparameterized (4 obs/subject for 4 random
   # effects + correlation matrix), fails to converge. Student-t RI selected.
   # list(
-  #   name = "fit_gaussian_rs",
-  #   label = "gaussian RS (informed)",
-  #   formula = formula_rs,
-  #   family = gaussian(),
-  #   prior = informed_priors_rs
+  #  name = "fit_gaussian_rs",
+  #  label = "gaussian RS (informed)",
+  #  formula = formula_rs,
+  #  family = gaussian(),
+  #  prior = informed_priors_rs
   # ),
   list(
     name = "fit_student_ri",
@@ -92,7 +92,7 @@ models <- list(
   )
 )
 
-# ── Fit models ───────────────────────────────────────────────────────────────
+# Fit models
 
 fits <- list()
 for (m in models) {
@@ -111,7 +111,7 @@ for (m in models) {
   fits[[m$name]] <- do.call(fit_or_load, c(model_args, overwrite = OVERWRITE))
 }
 
-# ── Model comparison (LOO) ──────────────────────────────────────────────────
+# Model comparison (LOO)
 
 loos <- lapply(fits, loo)
 comp_loo <- loo_compare(x = loos)
@@ -130,7 +130,7 @@ for (m in models) {
 }
 sink()
 
-# ── Select best model ───────────────────────────────────────────────────────
+# Select best model
 # RS wins LOO but fails to converge (divergences, Rhat > 1.05) because
 # 4 obs/subject cannot support 4 random effects + correlation matrix.
 # Student-t RI is second-best by LOO (~70 elpd ahead of Gaussian RI),
@@ -142,7 +142,7 @@ best <- fits[[best_name]]
 best_label <- label_map[best_name]
 cat("Selected model:", best_label, "\n")
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 fit_prior <- fit_or_load(
   "fit_prior_best",
@@ -180,7 +180,7 @@ png(
 pp_check(best, ndraws = 100, type = "dens_overlay_grouped", group = "Cluster")
 dev.off()
 
-# ── Save CSV outputs ────────────────────────────────────────────────────────
+# Save CSV outputs
 
 write.csv(as.data.frame(fixef(best)), file.path(out_dir, "fixed_effects.csv"))
 write.csv(
@@ -219,7 +219,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Pairwise contrasts with Bayes Factors (Savage-Dickey) ────────────────────
+# Pairwise contrasts with Bayes Factors (Savage-Dickey)
 
 em_posterior <- emmeans(best, pairwise ~ Cluster | block)
 em_prior <- emmeans(fit_prior, pairwise ~ Cluster | block)

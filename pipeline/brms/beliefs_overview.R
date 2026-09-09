@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 # Population-level opponent effect on opponent belief ratings (0-10).
 # Mirrors shocks_overview.R but with belief as outcome.
 # Cohort B beliefs assumed already rescaled from 0-5 to 0-10 in behav_Xb.csv.
@@ -11,7 +11,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "beliefs_overview")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Data preparation ─────────────────────────────────────────────────────────
+# Data preparation
 
 load_beliefs <- function(path, cohort_label) {
   raw <- read.csv(path, row.names = 1)
@@ -42,12 +42,12 @@ print(
     )
 )
 
-# ── Formula ──────────────────────────────────────────────────────────────────
+# Formula
 # Population-level opponent effect, random intercept by subject.
 
 formula <- belief ~ opponent * cohort + (1 | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Belief is bounded [0, 10]; centre prior at midpoint with broad scale.
 # Student-t family for robustness to boundary clumping.
 
@@ -58,7 +58,7 @@ priors <- c(
   prior(normal(0, 1.5), class = "sd")
 )
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 fit <- fit_or_load(
   "fit_student",
@@ -75,7 +75,7 @@ fit <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Prior-only model for Savage-Dickey BF ────────────────────────────────────
+# Prior-only model for Savage-Dickey BF
 
 fit_prior <- fit_or_load(
   "fit_prior",
@@ -93,7 +93,7 @@ fit_prior <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 save_diagnostics(
   fit,
@@ -104,7 +104,7 @@ save_diagnostics(
   ppc_xlim = c(-1, 11)
 )
 
-# ── Predicted means per opponent ─────────────────────────────────────────────
+# Predicted means per opponent
 
 newdata <- expand.grid(
   opponent = levels(df$opponent),
@@ -136,7 +136,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Opponent effect BF (Savage-Dickey) ───────────────────────────────────────
+# Opponent effect BF (Savage-Dickey)
 
 em_posterior <- emmeans(fit, pairwise ~ opponent | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ opponent | cohort)

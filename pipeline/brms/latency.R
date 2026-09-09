@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 # Shock latency model: do reactive subjects shock faster?
 # Lognormal family (reaction times are right-skewed).
 # Only trials where a shock was given.
@@ -11,7 +11,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "latency")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Load data ────────────────────────────────────────────────────────────────
+# Load data
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_latency_long.csv"))
 
@@ -28,11 +28,11 @@ cat("  Subjects:", nlevels(df$subject), "\n")
 cat("  Per cluster:", table(df$Cluster[!duplicated(df$subject)]), "\n")
 cat("  Mean latency:", round(mean(df$latency), 3), "s\n\n")
 
-# ── Formula ──────────────────────────────────────────────────────────────────
+# Formula
 
 formula_ri <- latency ~ Cluster * opponent + (1 | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Log-scale: log(0.75) ≈ -0.29, typical latencies ~0.7-0.9s
 
 priors <- c(
@@ -42,7 +42,7 @@ priors <- c(
   prior(student_t(3, 0, 0.5), class = "sigma")
 )
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 fit <- fit_or_load(
   "fit_lognormal",
@@ -61,7 +61,7 @@ fit <- fit_or_load(
 
 cat("Model fitted\n\n")
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 save_diagnostics(
   fit,
@@ -71,7 +71,7 @@ save_diagnostics(
   ppc_xlim = c(0, 10)
 )
 
-# ── Posterior predicted means ────────────────────────────────────────────────
+# Posterior predicted means
 
 write.csv(as.data.frame(fixef(fit)), file.path(out_dir, "fixed_effects.csv"))
 
@@ -107,7 +107,7 @@ write.csv(
 cat("Predicted means (response scale):\n")
 print(pred_summary)
 
-# ── Pairwise contrasts (Savage-Dickey) ───────────────────────────────────────
+# Pairwise contrasts (Savage-Dickey)
 
 fit_prior <- fit_or_load(
   "fit_prior_lognormal",

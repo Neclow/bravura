@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 # Test whether baseline HR differs between clusters.
 # Expected result: no difference (supports state vs trait argument).
 
@@ -10,7 +10,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "baseline_hr")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Load data ────────────────────────────────────────────────────────────────
+# Load data
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "baseline_hr.csv"))
 df$Cluster <- factor(
@@ -26,7 +26,7 @@ print(tapply(df$HR_Pre, df$Cluster, function(x) {
 }))
 cat("\n")
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 priors <- c(
   prior(normal(85, 15), class = "Intercept"),
@@ -52,7 +52,7 @@ fit <- fit_or_load(
 cat("Fixed effects:\n")
 print(round(fixef(fit), 2))
 
-# ── Savage-Dickey BFs ────────────────────────────────────────────────────────
+# Savage-Dickey BFs
 
 fit_prior <- fit_or_load(
   "fit_baseline_hr_prior",
@@ -87,7 +87,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Posterior predicted means per cluster ─────────────────────────────────────
+# Posterior predicted means per cluster
 
 newdata <- data.frame(Cluster = levels(df$Cluster))
 
@@ -118,7 +118,7 @@ write.csv(
 cat("\nPredicted means:\n")
 print(pred_summary)
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 save_diagnostics(
   fit,

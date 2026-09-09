@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
@@ -11,7 +11,7 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 # psap_ilr.csv has noise-replaced zeros and renormalized proportions
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "psap_ilr.csv"))
 
-# ── Model ────────────────────────────────────────────────────────────────────
+# Model
 
 formula <- bf(cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 | p | Subject))
 
@@ -28,7 +28,7 @@ fit <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 dirichlet_dir <- file.path(out_dir, "fit_dirichlet")
 dir.create(dirichlet_dir, showWarnings = FALSE)
@@ -50,7 +50,7 @@ png(
 print(plot(fit, ask = FALSE))
 dev.off()
 
-# ── Posterior predictions ────────────────────────────────────────────────────
+# Posterior predictions
 
 newdata <- expand.grid(
   Cluster = unique(df$Cluster),
@@ -74,7 +74,7 @@ all_summary <- all_epred %>%
     .groups = "drop"
   )
 
-# ── Pairwise contrasts (CrI-based) ──────────────────────────────────────────
+# Pairwise contrasts (CrI-based)
 
 bf_table <- pairwise_bf(
   epred = as.data.frame(all_epred),
@@ -91,7 +91,7 @@ bf_table <- pairwise_bf(
 cat("\nPairwise contrasts:\n")
 print(bf_table, digits = 3)
 
-# ── Save outputs ─────────────────────────────────────────────────────────────
+# Save outputs
 
 write.csv(
   as.data.frame(fixef(fit)),

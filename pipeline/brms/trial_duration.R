@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
@@ -8,7 +8,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "trial_duration")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Data preparation ─────────────────────────────────────────────────────────
+# Data preparation
 
 # Load trial-level data (both cohorts)
 trials <- read.csv(file.path(DEFAULT_DATA_DIR, "shared", "trial_events.csv"))
@@ -55,13 +55,13 @@ print(
     )
 )
 
-# ── Formula ──────────────────────────────────────────────────────────────────
+# Formula
 # Trial duration ~ decision type, random intercept by subject
 # Student-t for robustness to outliers
 
 formula <- duration ~ decision * cohort + (1 | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Mean duration ~5s; differences expected to be small (~0.5s)
 
 priors <- c(
@@ -72,7 +72,7 @@ priors <- c(
   prior(gamma(2, 0.1), class = "nu")
 )
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 fit <- fit_or_load(
   "fit_student",
@@ -89,7 +89,7 @@ fit <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Prior-only model for Savage-Dickey BF ────────────────────────────────────
+# Prior-only model for Savage-Dickey BF
 
 fit_prior <- fit_or_load(
   "fit_prior",
@@ -106,7 +106,7 @@ fit_prior <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 save_diagnostics(
   fit,
@@ -117,7 +117,7 @@ save_diagnostics(
   ppc_xlim = c(0, 30)
 )
 
-# ── Predicted means per decision ─────────────────────────────────────────────
+# Predicted means per decision
 
 newdata <- expand.grid(
   decision = levels(trials$decision),
@@ -149,7 +149,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Pairwise contrasts with Bayes Factors (Savage-Dickey) ────────────────────
+# Pairwise contrasts with Bayes Factors (Savage-Dickey)
 
 em_posterior <- emmeans(fit, pairwise ~ decision | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ decision | cohort)

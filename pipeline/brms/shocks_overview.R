@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
@@ -8,7 +8,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "shocks_overview")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# ── Data preparation ─────────────────────────────────────────────────────────
+# Data preparation
 # Derive shock counts from behav_Xa and behav_Xb (both cohorts, included only)
 
 load_shocks <- function(path, cohort_label) {
@@ -40,12 +40,12 @@ print(
     )
 )
 
-# ── Formula ──────────────────────────────────────────────────────────────────
+# Formula
 # Population-level opponent effect (no Cluster), random intercept by subject
 
 formula <- shocks | trials(15) ~ opponent * cohort + (1 | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Mean ~5 shocks/15 => logit(5/15) ~ -0.4; opponent 2 provokes more => positive slope
 
 priors <- c(
@@ -54,7 +54,7 @@ priors <- c(
   prior(normal(0, 1.5), class = "sd")
 )
 
-# ── Fit model ────────────────────────────────────────────────────────────────
+# Fit model
 
 fit <- fit_or_load(
   "fit_binomial",
@@ -70,7 +70,7 @@ fit <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Prior-only model for Savage-Dickey BF ────────────────────────────────────
+# Prior-only model for Savage-Dickey BF
 
 fit_prior <- fit_or_load(
   "fit_prior",
@@ -87,7 +87,7 @@ fit_prior <- fit_or_load(
   overwrite = OVERWRITE
 )
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 save_diagnostics(
   fit,
@@ -100,7 +100,7 @@ save_diagnostics(
   )
 )
 
-# ── Predicted means per opponent ─────────────────────────────────────────────
+# Predicted means per opponent
 
 newdata <- expand.grid(
   opponent = levels(df$opponent),
@@ -132,7 +132,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Opponent effect BF (Savage-Dickey) ───────────────────────────────────────
+# Opponent effect BF (Savage-Dickey)
 
 em_posterior <- emmeans(fit, pairwise ~ opponent | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ opponent | cohort)

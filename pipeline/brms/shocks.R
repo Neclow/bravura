@@ -1,6 +1,6 @@
 source("src/brms/utils.R")
 
-# ── Setup ────────────────────────────────────────────────────────────────────
+# Setup
 
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
@@ -10,14 +10,14 @@ dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_long.csv"))
 
-# ── Formulas ─────────────────────────────────────────────────────────────────
+# Formulas
 
 formula_ri <- shocks | trials(15) ~ Cluster * opponent + (1 | subject)
 formula_rs <- shocks | trials(15) ~ Cluster *
   opponent +
   (1 + opponent | subject)
 
-# ── Priors ───────────────────────────────────────────────────────────────────
+# Priors
 # Intercept: logit scale, N(0, 2) centres on 50% with broad coverage
 # Slopes: N(0, 1) weakly informative on logit scale
 # SD: half-normal, weakly informative
@@ -42,7 +42,7 @@ priors_betabinomial <- c(
   prior(gamma(1, 0.1), class = "phi")
 )
 
-# ── Model registry ──────────────────────────────────────────────────────────
+# Model registry
 
 common <- list(
   data = df,
@@ -83,7 +83,7 @@ models <- list(
   )
 )
 
-# ── Fit models ───────────────────────────────────────────────────────────────
+# Fit models
 
 fits <- list()
 for (m in models) {
@@ -102,7 +102,7 @@ for (m in models) {
   fits[[m$name]] <- do.call(fit_or_load, c(model_args, overwrite = OVERWRITE))
 }
 
-# ── Model comparison (LOO) ──────────────────────────────────────────────────
+# Model comparison (LOO)
 
 loos <- lapply(fits, loo)
 comp_loo <- loo_compare(x = loos)
@@ -121,14 +121,14 @@ for (m in models) {
 }
 sink()
 
-# ── Select best model ──────────────────────────────────────────────────────
+# Select best model
 
 best_name <- rownames(comp_loo)[1]
 best <- fits[[best_name]]
 best_label <- label_map[best_name]
 cat("Best model (LOO):", best_label, "\n")
 
-# ── Diagnostics ──────────────────────────────────────────────────────────────
+# Diagnostics
 
 fit_prior <- fit_or_load(
   "fit_prior_best",
@@ -168,7 +168,7 @@ png(
 pp_check(best, ndraws = 100, type = "dens_overlay_grouped", group = "Cluster")
 dev.off()
 
-# ── Save CSV outputs ────────────────────────────────────────────────────────
+# Save CSV outputs
 
 write.csv(as.data.frame(fixef(best)), file.path(out_dir, "fixed_effects.csv"))
 write.csv(
@@ -211,7 +211,7 @@ write.csv(
   row.names = FALSE
 )
 
-# ── Pairwise contrasts with Bayes Factors (Savage-Dickey) ────────────────────
+# Pairwise contrasts with Bayes Factors (Savage-Dickey)
 
 em_posterior <- emmeans(best, pairwise ~ Cluster | opponent)
 em_prior <- emmeans(fit_prior, pairwise ~ Cluster | opponent)
