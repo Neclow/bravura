@@ -12,8 +12,8 @@ Repository for _Bravura: an open immersive virtual reality paradigm for human re
 ### Dependencies
 
 ```bash
-pixi install              # Python + R dependencies
-pixi run post_install     # brms (installed from CRAN)
+pixi install                             # Python + R dependencies
+pixi run post_install                    # brms (installed from CRAN)
 git submodule update --init --recursive  # MATLAB toolboxes
 ```
 
