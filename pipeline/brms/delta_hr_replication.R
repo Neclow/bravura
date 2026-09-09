@@ -101,8 +101,14 @@ fit_block <- function(blk) {
 
   cat("\nCluster contrasts (pooled across cohorts):\n")
   print(
-    bf_cluster[, c("contrast", "estimate", "Q2.5", "Q97.5", "BF10",
-                    "excl_zero")],
+    bf_cluster[, c(
+      "contrast",
+      "estimate",
+      "Q2.5",
+      "Q97.5",
+      "BF10",
+      "excl_zero"
+    )],
     digits = 3
   )
 
@@ -120,8 +126,14 @@ fit_block <- function(blk) {
 
   cat("\nCluster contrasts per cohort:\n")
   print(
-    bf_per_cohort[, c("contrast", "cohort", "estimate", "Q2.5", "Q97.5",
-                       "excl_zero")],
+    bf_per_cohort[, c(
+      "contrast",
+      "cohort",
+      "estimate",
+      "Q2.5",
+      "Q97.5",
+      "excl_zero"
+    )],
     digits = 3
   )
 
@@ -224,7 +236,11 @@ fit_block <- function(blk) {
       d <- (mean(x2) - mean(x1)) / pooled_sd
       cat(sprintf(
         "    %s - %s: d = %.2f (n = %d vs %d)\n",
-        c2, c1, d, length(x2), length(x1)
+        c2,
+        c1,
+        d,
+        length(x2),
+        length(x1)
       ))
     }
   }
