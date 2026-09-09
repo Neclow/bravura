@@ -39,7 +39,7 @@ def parse_contrast(contrast):
     return parts[0].strip("() "), parts[1].strip("() ")
 
 
-# -- Data loaders -------------------------------------------------------------
+# Data loaders
 
 
 def load_delta_hr_data():
@@ -125,18 +125,7 @@ def load_hr_timecourse_data():
     return hr_stats, grand_stats, physio_hr, labels
 
 
-def load_replication_bf():
-    """Load replication Bayes factors (Supp. Table 8).
-
-    Returns
-    -------
-    rep_bf : DataFrame
-        Replication BFs for delta-HR contrasts.
-    """
-    return pd.read_csv(f"{DEFAULT_BRMS_DIR}/delta_hr_replication/replication_bf.csv")
-
-
-# -- Annotation helpers --------------------------------------------------------
+# Annotation helpers
 
 
 def build_delta_hr_annotations(bf):
@@ -159,7 +148,7 @@ def build_delta_hr_annotations(bf):
     return pairs, labels
 
 
-# -- Plot functions ------------------------------------------------------------
+# Plot functions
 
 
 def plot_delta_hr(posterior, bf):
@@ -373,33 +362,6 @@ def plot_delta_hr_heatmap(physio_hr, labels):
         plt.show()
 
 
-def save_replication_table(rep_bf):
-    """Save replication BF table (Supp. Table 8)."""
-    cols = [
-        "block",
-        "contrast",
-        "d_original",
-        "d_replication",
-        "n_original",
-        "n_replication",
-        "BFr",
-        "BFs",
-    ]
-    table = rep_bf[cols].rename(
-        columns={
-            "block": "Block",
-            "contrast": "Contrast",
-            "d_original": "d (original)",
-            "d_replication": "d (replication)",
-            "n_original": "N (original)",
-            "n_replication": "N (replication)",
-        }
-    )
-    table_path = f"{FIG4_DIR}/tableS8_replication_bf.md"
-    table.round(3).to_markdown(table_path, index=False)
-    print(f"Saved {table_path}")
-
-
 if __name__ == "__main__":
     # Fig 4b
     posterior, bf = load_delta_hr_data()
@@ -413,7 +375,3 @@ if __name__ == "__main__":
     hr_stats, grand_stats, physio_hr, labels = load_hr_timecourse_data()
     plot_hr_timecourse(hr_stats, grand_stats)
     plot_delta_hr_heatmap(physio_hr, labels)
-
-    # Supp Table 8
-    rep_bf = load_replication_bf()
-    save_replication_table(rep_bf)

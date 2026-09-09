@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import seaborn as sns
+
 from statannotations.Annotator import Annotator
 
 from src._config import DEFAULT_BRMS_DIR, N_OPPONENTS
@@ -42,15 +43,24 @@ def plot_belief_vs_opponent(cohort):
         fig, ax = plt.subplots(figsize=(2.5, 3))
         sns.barplot(
             **plot_dict,
-            palette="Greys_r",
-            capsize=0.05,
+            hue="opponent",
+            palette=["white", "grey"],
+            edgecolor="black",
+            capsize=0.15,
+            err_kws={"linewidth": 1},
             errorbar=("pi", 95),
+            legend=False,
             ax=ax,
         )
-        ax.set_xticklabels([f"Opponent {i + 1}\n" for i in range(N_OPPONENTS)])
-        ax.set_ylabel("Belief [0-10]")
-        ax.set_xlabel("")
+        ax.set_xticklabels(
+            [f"{i + 1}" for i in range(N_OPPONENTS)],
+            fontweight="bold",
+        )
+        ax.set_ylabel("Reported belief [0-10]", fontweight="bold")
+        ax.set_xlabel("Opponent", fontweight="bold")
         ax.set_ylim(bottom=0, top=10)
+        for label in ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         bf = bf_beliefs[(bf_beliefs["cohort"] == cohort) & bf_beliefs["excl_zero"]]
         if not bf.empty:
@@ -70,7 +80,7 @@ def plot_belief_vs_opponent(cohort):
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG2_DIR}/tableS2_beliefs_opponent{suffix}.md"
+    table_path = f"{FIG2_DIR}/tableS5_beliefs_opponent.md"
     bf_beliefs.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 

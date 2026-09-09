@@ -50,20 +50,24 @@ def plot_latency(posterior, bf):
             ax=ax,
         )
 
-        ax.set_xlabel("Opponent")
-        ax.set_ylabel("Shock latency (s)")
-        ax.legend(title="", frameon=False)
-        ax.set_axisbelow(True)
-        ax.grid(alpha=0.3, axis="y", zorder=0)
+        ax.set_xlabel("Opponent", fontweight="bold")
+        ax.set_ylabel("Shock latency (s)", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
+        legend = ax.legend(
+            title="", frameon=False, bbox_to_anchor=(1, 1), loc="upper left"
+        )
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
 
         fig.tight_layout()
-        stem = f"{FIG_DIR}/figS5_latency"
+        stem = f"{FIG_DIR}/figS10_latency"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG_DIR}/figS5_latency_bf.md"
+    table_path = f"{FIG_DIR}/figS10_latency_bf.md"
     bf[["opponent", "contrast", "BF10", "excl_zero"]].set_index("contrast").round(
         3
     ).to_markdown(table_path)

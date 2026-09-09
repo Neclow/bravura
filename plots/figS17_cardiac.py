@@ -30,9 +30,7 @@ def load_data():
     block11 : DataFrame
         Pairwise contrasts filtered to the focus block.
     """
-    contrasts = pd.read_csv(
-        f"{DEFAULT_BRMS_DIR}/physio_cardiac/pairwise_contrasts.csv"
-    )
+    contrasts = pd.read_csv(f"{DEFAULT_BRMS_DIR}/physio_cardiac/pairwise_contrasts.csv")
     return contrasts[contrasts["block"] == float(FOCUS_BLOCK)]
 
 
@@ -73,11 +71,9 @@ def plot_cardiac_contrasts(block11):
             ax.set_xlabel("Δ (score)")
             ax.set_xlim(-2, 2)
 
-        fig.suptitle(
-            "Block 1.1 pairwise contrasts (95% CrI)", y=0.96, fontsize=11
-        )
+        fig.suptitle("Block 1.1 pairwise contrasts (95% CrI)", y=0.96, fontsize=11)
         fig.tight_layout()
-        stem = f"{FIG_DIR}/figS8_cardiac_contrasts"
+        stem = f"{FIG_DIR}/figS17_cardiac_contrasts"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")

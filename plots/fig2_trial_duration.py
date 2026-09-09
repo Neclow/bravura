@@ -19,11 +19,11 @@ os.makedirs(FIG2_DIR, exist_ok=True)
 
 DECISION_ORDER = ["Enlarge", "Shock"]
 DECISION_MAP = {
-    "ring": "Loop enlarged",
-    "shock": "Shock given",
+    "ring": "Enlarge loop",
+    "shock": "Give shock",
     float("nan"): "Nothing",
 }
-DECISION_LABELS = ["Loop enlarged", "Shock given"]
+DECISION_LABELS = ["Enlarge loop", "Give shock"]
 
 TEST_SUBJECTS = ["P089"]
 
@@ -70,20 +70,24 @@ def plot_trial_duration(cohort):
         }
 
         fig, ax = plt.subplots(figsize=(2.5, 3))
-        sns.barplot(
+        sns.pointplot(
             **plot_dict,
             order=DECISION_ORDER,
-            palette="Greys_r",
-            capsize=0.05,
+            color="black",
+            capsize=0.15,
+            err_kws={"linewidth": 1},
             errorbar=("pi", 95),
             ax=ax,
         )
-        labels = [f"{d}\n(N = {counts[d]})" for d in DECISION_LABELS]
-        ax.set_xticklabels(labels)
-        ax.set_ylabel("Trial duration (s)")
-        ax.set_xlabel("")
+        labels = DECISION_LABELS
+        ax.set_xticklabels(labels, fontweight="bold")
+        ax.set_ylabel("Trial duration (s)", fontweight="bold")
+        ax.set_xlabel("Participant decision", fontweight="bold")
+        ax.set_ylim(bottom=3.5, top=6.0)
         ax.axhline(4, color="darkred", linestyle="--", alpha=0.5)
         ax.yaxis.set_major_locator(plt.MultipleLocator(0.5))
+        for label in ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         sig = bf_duration[(bf_duration["cohort"] == cohort) & bf_duration["excl_zero"]]
         pairs = []
@@ -109,7 +113,7 @@ def plot_trial_duration(cohort):
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG2_DIR}/tableS3_trial_duration{suffix}.md"
+    table_path = f"{FIG2_DIR}/tableS6_trial_duration.md"
     bf_duration.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 

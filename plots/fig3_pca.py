@@ -107,8 +107,10 @@ def plot_pca(Xa, Xb, centroids_pca, explained_variance_ratio):
                 zorder=5,
             )
 
-        ax.set_xlabel(f"PC1 ({explained_variance_ratio[0]:.1%})")
-        ax.set_ylabel(f"PC2 ({explained_variance_ratio[1]:.1%})")
+        ax.set_xlabel(f"PC1 ({explained_variance_ratio[0]:.1%})", fontweight="bold")
+        ax.set_ylabel(f"PC2 ({explained_variance_ratio[1]:.1%})", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         handles = [
             (
@@ -117,7 +119,7 @@ def plot_pca(Xa, Xb, centroids_pca, explained_variance_ratio):
             )
             for cl in CLUSTERS
         ]
-        ax.legend(
+        legend = ax.legend(
             handles,
             [cl["name"] for cl in CLUSTERS],
             handler_map={tuple: HandlerTuple(ndivide=None, pad=0.15)},
@@ -125,6 +127,8 @@ def plot_pca(Xa, Xb, centroids_pca, explained_variance_ratio):
             bbox_to_anchor=(0.9, 1.0),
             frameon=True,
         )
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
 
         lim = 4
         ticks = np.linspace(-lim, lim, 5)

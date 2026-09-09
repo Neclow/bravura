@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from scipy.stats import spearmanr
 from sklearn.metrics import adjusted_rand_score
 from statannotations.Annotator import Annotator
 
@@ -32,7 +33,7 @@ BUTTON_ORDER = ["Earn", "Steal", "Protect"]
 GRID_RINGS = [0.25, 0.5, 0.75, 1.0]
 
 
-# -- Fig 3f data + plot -------------------------------------------------------
+# Fig 3f
 
 
 def load_concurrent_data():
@@ -99,7 +100,7 @@ def plot_psap_concurrent(posterior, bf):
                 capsize=0.1,
                 ax=ax,
             )
-            ax.set_title(f"{phase} phase")
+            ax.set_title(f"{phase} phase", fontweight="bold")
             ax.set_xlabel("")
             ax.set_axisbelow(True)
             ax.set_ylim(0, 1)
@@ -111,7 +112,10 @@ def plot_psap_concurrent(posterior, bf):
                 annot.set_custom_annotations(labels)
                 annot.annotate()
 
-        axes[0].set_ylabel("Proportion")
+        axes[0].set_ylabel("Proportion", fontweight="bold")
+        for ax in axes:
+            for label in ax.get_xticklabels() + ax.get_yticklabels():
+                label.set_fontweight("bold")
 
         plt.tight_layout()
         stem = f"{FIG3_DIR}/fig3f_psap_concurrent"
@@ -120,12 +124,12 @@ def plot_psap_concurrent(posterior, bf):
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG3_DIR}/tableS6_psap.md"
+    table_path = f"{FIG3_DIR}/tableS8_psap.md"
     bf.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 
 
-# -- Fig S6 data + plots ------------------------------------------------------
+# Fig S13 data + plots
 
 
 def load_psap_clustering_data():
@@ -187,7 +191,7 @@ def load_psap_clustering_data():
 
 
 def plot_psap_clustering(profiles, ari, ct):
-    """Plot PSAP cluster radar charts and contingency heatmap (Fig. S6a)."""
+    """Plot PSAP cluster radar charts and contingency heatmap (Fig. S13a)."""
     n_feat = len(PSAP_FEATURES)
     angles = np.linspace(0, 2 * np.pi, n_feat, endpoint=False).tolist()
     angles += angles[:1]
@@ -210,7 +214,7 @@ def plot_psap_clustering(profiles, ari, ct):
             ax.plot(angles, values, color=psap_palette[cluster_id], linewidth=1.5)
 
             ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(PSAP_FEATURES)
+            ax.set_xticklabels(PSAP_FEATURES, fontweight="bold")
             ax.set_ylim(0, 1)
             ax.set_yticks(GRID_RINGS)
             ax.set_yticklabels(["", "0.5", "", "1.0"])
@@ -228,10 +232,16 @@ def plot_psap_clustering(profiles, ari, ct):
 
         ax_ct = fig.add_subplot(1, 4, 4)
         sns.heatmap(ct, annot=True, fmt="d", cmap="Blues", ax=ax_ct)
-        ax_ct.set_title(f"ARI = {ari:.3f}")
+        ax_ct.set_title(f"ARI = {ari:.3f}", fontweight="bold")
+        for label in ax_ct.get_xticklabels() + ax_ct.get_yticklabels():
+            label.set_fontweight("bold")
+        cbar = ax_ct.collections[0].colorbar
+        if cbar:
+            for label in cbar.ax.get_yticklabels():
+                label.set_fontweight("bold")
 
         plt.tight_layout()
-        stem = f"{FIG3_DIR}/figS6a_psap_clustering"
+        stem = f"{FIG3_DIR}/figS13a_psap_clustering"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -244,8 +254,8 @@ def plot_psap_clustering(profiles, ari, ct):
 
 
 def plot_psap_scatter(psap_scatter):
-    """Plot Bravura shocks vs PSAP B-presses scatter (Fig. S6b)."""
-    r = psap_scatter["shock_prop"].corr(psap_scatter["B_prop"], method="spearman")
+    """Plot Bravura shocks vs PSAP B-presses scatter (Fig. S13b)."""
+    rho, pval = spearmanr(psap_scatter["shock_prop"], psap_scatter["B_prop"])
 
     with plt.style.context(DEFAULT_STYLE):
         fig, ax = plt.subplots(figsize=(3.5, 3))
@@ -258,22 +268,24 @@ def plot_psap_scatter(psap_scatter):
             line_kws={"lw": 1},
             ax=ax,
         )
-        ax.set_xlabel("Average % shocks (Bravura)")
-        ax.set_ylabel("Average % B presses (PSAP)")
+        ax.set_xlabel("Average % shocks (Bravura)", fontweight="bold")
+        ax.set_ylabel("Average % B presses (PSAP)", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.set_ylim(-0.05, 1)
-        ax.set_title(f"Spearman's r = {r:.2f}")
         ax.set_axisbelow(True)
         ax.grid(alpha=0.3)
 
         plt.tight_layout()
-        stem = f"{FIG3_DIR}/figS6b_psap_scatter"
+        stem = f"{FIG3_DIR}/figS13b_psap_scatter"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
     with open(f"{stem}_stats.txt", "w", encoding="utf-8") as f:
-        f.write(f"Spearman's r = {r:.3f}\n")
+        f.write(f"Spearman's rho = {rho:.3f}\n")
+        f.write(f"p = {pval:.4f}\n")
         f.write(f"N = {len(psap_scatter)}\n")
     print(f"Saved {stem}_stats.txt")
 
@@ -283,7 +295,7 @@ if __name__ == "__main__":
     posterior, bf = load_concurrent_data()
     plot_psap_concurrent(posterior, bf)
 
-    # Fig S6
+    # Fig S13
     profiles, ari, ct, psap_scatter = load_psap_clustering_data()
     plot_psap_clustering(profiles, ari, ct)
     plot_psap_scatter(psap_scatter)

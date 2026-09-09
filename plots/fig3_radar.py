@@ -79,7 +79,7 @@ def plot_radar(cluster_means_a, cluster_means_b):
             )
 
             ax.set_xticks(angles[:-1])
-            ax.set_xticklabels(RADAR_LABELS)
+            ax.set_xticklabels(RADAR_LABELS, fontweight="bold")
             ax.set_ylim(0, 1)
             ax.set_yticks(GRID_RINGS)
             ax.set_yticklabels(["", "0.5", "", "1.0"])

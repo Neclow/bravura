@@ -118,10 +118,9 @@ def plot_shock_vs_belief(cohort, belief_scale=1):
         g.ax_joint.set_ylabel("Mean belief [0-10]")
         g.ax_joint.legend(fontsize=7, loc="upper right")
 
-        plt.savefig(f"{FIG2_DIR}/shock_vs_belief{suffix}.pdf", bbox_inches="tight")
-        plt.savefig(
-            f"{FIG2_DIR}/shock_vs_belief{suffix}.png", dpi=300, bbox_inches="tight"
-        )
+        stem = f"{FIG2_DIR}/figS1_shock_vs_belief{suffix}"
+        plt.savefig(f"{stem}.pdf", bbox_inches="tight")
+        plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {FIG2_DIR}/shock_vs_belief{suffix}.pdf/.png")
         plt.show()
 

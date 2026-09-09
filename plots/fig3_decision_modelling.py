@@ -11,14 +11,13 @@ from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import resample
 
 from src._config import (
-    CLUSTERS,
     CLUSTER_PALETTE,
+    CLUSTERS,
     DEFAULT_DATA_DIR,
     DEFAULT_PROCESSED_DIR,
-    DEFAULT_SHARED_DIR,
 )
 
-from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE, SCRIPT_FNAME
+from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE, SCRIPT_PATH
 
 FIG3_DIR = f"{DEFAULT_IMG_DIR}/fig3"
 os.makedirs(FIG3_DIR, exist_ok=True)
@@ -43,7 +42,7 @@ def load_data(cohort):
     actual_sorted = actual_clean[sort_order]
     pred_sorted = pred_clean[sort_order]
 
-    script = pd.read_excel(SCRIPT_FNAME, index_col="Session")
+    script = pd.read_excel(SCRIPT_PATH, index_col="Session")
     shocked = script.loc["Shocked"].values.astype(int)
     wins = script.loc["Win"].values.astype(int)
 
@@ -79,7 +78,7 @@ def plot_decisions(actual_sorted, pred_sorted, shocked, wins):
             ax=axes[0],
         )
         axes[0].set_title("Observed", y=1.02, fontweight="bold")
-        axes[0].set_ylabel("Subject (sorted by total shocks given)")
+        axes[0].set_ylabel("Subject (sorted by total shocks given)", fontweight="bold")
         sns.heatmap(
             pred_sorted,
             cmap=cmap,
@@ -92,8 +91,8 @@ def plot_decisions(actual_sorted, pred_sorted, shocked, wins):
         ticks = [1, 5, 10, 15, 20, 25, 30]
         for ax in axes[:-1]:
             ax.set_xticks([t - 0.5 for t in ticks])
-            ax.set_xticklabels(ticks)
-            ax.set_xlabel("Trial")
+            ax.set_xticklabels(ticks, fontweight="bold")
+            ax.set_xlabel("Trial", fontweight="bold")
             ax.axvline(x=15, color="black", linestyle="--", linewidth=1, alpha=0.5)
             ax.set_yticks([])
             for i in range(len(actual_sorted)):
@@ -130,8 +129,11 @@ def plot_decisions(actual_sorted, pred_sorted, shocked, wins):
             fontweight="bold",
         )
 
-        fig.colorbar(axes[1].collections[0], cax=axes[2], label="P(shock)")
+        cbar = fig.colorbar(axes[1].collections[0], cax=axes[2], label="P(shock)")
+        cbar.set_label("P(shock)", fontweight="bold")
         axes[2].set_yticks([0, 0.25, 0.5, 0.75, 1])
+        for label in axes[2].get_yticklabels():
+            label.set_fontweight("bold")
         axes[2].set_position(
             [axes[2].get_position().x0, 0.3, axes[2].get_position().width, 0.3]
         )
@@ -195,10 +197,14 @@ def plot_roc(actual_sorted, pred_sorted):
             mean_fpr, tpr_lower, tpr_upper, color="red", alpha=0.15, label="95% CI"
         )
 
-        ax.set_xlabel("False positive rate")
-        ax.set_ylabel("True positive rate")
-        ax.legend()
-        stem = f"{FIG3_DIR}/figS2a_roc_curve"
+        ax.set_xlabel("False positive rate", fontweight="bold")
+        ax.set_ylabel("True positive rate", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
+        legend = ax.legend()
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
+        stem = f"{FIG3_DIR}/figS6a_roc_curve"
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -216,7 +222,7 @@ def plot_calibration(actual_sorted, pred_sorted):
         y_true[mask], y_pred[mask], n_bins=10
     )
 
-    with plt.style.context(".matplotlib/paper.mplstyle"):
+    with plt.style.context(DEFAULT_STYLE):
         fig, ax = plt.subplots(figsize=(3.5, 3))
         ax.plot(
             mean_predicted,
@@ -238,14 +244,18 @@ def plot_calibration(actual_sorted, pred_sorted):
             alpha=0.03,
             color="gray",
         )
-        ax.set_xlabel("Predicted P(shock)")
-        ax.set_ylabel("Observed fraction of shocks")
+        ax.set_xlabel("Predicted P(shock)", fontweight="bold")
+        ax.set_ylabel("Observed fraction of shocks", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.set_xlim(0, 1)
         ax.set_ylim(0, 1)
         ax.set_aspect("equal")
-        ax.legend(loc="lower right")
+        legend = ax.legend(loc="lower right")
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
         ax.grid(alpha=0.3)
-        stem = f"{FIG3_DIR}/figS2b_calibration"
+        stem = f"{FIG3_DIR}/figS6b_calibration"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -261,7 +271,7 @@ def plot_vba_corr_matrix(corr_preds):
     # Annotation: mean values as text
     annot = np.array([[f"{corr_mean[i, j]:.2f}" for j in range(4)] for i in range(4)])
 
-    with plt.style.context(".matplotlib/paper.mplstyle"):
+    with plt.style.context(DEFAULT_STYLE):
         fig, ax = plt.subplots(figsize=(3.5, 3))
         sns.heatmap(
             corr_mean,
@@ -280,12 +290,15 @@ def plot_vba_corr_matrix(corr_preds):
             ax=ax,
         )
         cbar = ax.collections[0].colorbar
+        cbar.set_label(cbar.ax.get_ylabel(), fontweight="bold")
         cbar.set_ticks([-1, -0.5, 0, 0.5, 1])
+        for label in cbar.ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.set_yticks(ax.get_yticks()[1:])
         ax.set_xticks(ax.get_xticks()[:-1])
         # ax.set_title("Model parameter correlations\n(simulation-recovery)", fontweight="bold")
 
-        stem = f"{FIG3_DIR}/figS3a_vba_corr_matrix"
+        stem = f"{FIG3_DIR}/figS2a_vba_corr_matrix"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -304,7 +317,7 @@ def plot_vba_cov_stats(cov_stats):
     determinants = cov_stats[:, 0]
     ranks = (determinants > 1e-10).astype(int) * 4  # full rank if det > 0
 
-    with plt.style.context(".matplotlib/paper.mplstyle"):
+    with plt.style.context(DEFAULT_STYLE):
         fig, ax = plt.subplots(1, 1, figsize=(3.5, 3))
 
         sns.histplot(
@@ -316,7 +329,9 @@ def plot_vba_cov_stats(cov_stats):
             kde=True,
             ax=ax,
         )
-        ax.set_xlabel("Cond($\Sigma$)")
+        ax.set_xlabel(r"Cond($\Sigma$)", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         # axes[0].hist(cond_numbers, bins=20, color="k", edgecolor="white", linewidth=0.5)
         ax.axvline(
             np.median(cond_numbers),
@@ -324,10 +339,12 @@ def plot_vba_cov_stats(cov_stats):
             linestyle="--",
             label=f"median = {np.median(cond_numbers):.1f}",
         )
-        ax.legend(frameon=False)
+        legend = ax.legend(frameon=False)
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
 
         fig.tight_layout()
-        stem = f"{FIG3_DIR}/figS3b_condition_numbers"
+        stem = f"{FIG3_DIR}/figS2b_condition_numbers"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -340,6 +357,52 @@ def plot_vba_cov_stats(cov_stats):
             )
             f.write(f"All full rank: {(ranks == 4).all()}\n")
         print(f"Saved {stem}_stats.txt")
+
+
+COEF_LABELS = {
+    "Kp": r"$K_p$ (baseline)",
+    "Kr1": r"$K_{r_1}$ (immediate reaction)",
+    "Krc": r"$K_{r_c}$ (cumulative reaction)",
+    "Kwc": r"$K_{w_c}$ (win-loss response)",
+}
+
+
+def plot_coef_distributions(cohort="a"):
+    """Plot VBA coefficient distributions for included subjects (Fig. S7)."""
+    cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
+    coefs = pd.read_csv(f"{cohort_dir}/coefficients.csv", index_col="Row")
+
+    ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
+    outliers = loadmat(f"{cohort_dir}/outliers.mat", squeeze_me=True)["outliers"]
+    included = ids["subject"][~ids["subject"].isin(outliers)]
+    coefs = coefs.loc[included]
+
+    with plt.style.context(DEFAULT_STYLE):
+        fig, axes = plt.subplots(1, 4, figsize=(10, 2.5), sharey=True)
+
+        for ax, (col, label) in zip(axes, COEF_LABELS.items()):
+            sns.histplot(
+                coefs[col], kde=True, color="k", ax=ax,
+                bins=15, edgecolor="white", linewidth=0.5,
+            )
+            ax.set_xlabel(label, fontweight="bold")
+            ax.set_ylabel("")
+            for tick in ax.get_xticklabels() + ax.get_yticklabels():
+                tick.set_fontweight("bold")
+
+        axes[0].set_ylabel("Count", fontweight="bold")
+        plt.tight_layout()
+        stem = f"{FIG3_DIR}/figS7_coef_distributions"
+        fig.savefig(f"{stem}.pdf", bbox_inches="tight")
+        fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
+        print(f"Saved {stem}.pdf/.png")
+        plt.show()
+
+    with open(f"{stem}_stats.txt", "w", encoding="utf-8") as f:
+        f.write(f"N = {len(coefs)}\n\n")
+        f.write(coefs.describe().round(3).to_string())
+        f.write("\n")
+    print(f"Saved {stem}_stats.txt")
 
 
 def load_trial_pshock_data(cohort="a"):
@@ -366,9 +429,7 @@ def load_trial_pshock_data(cohort="a"):
     cluster_means = pred_cluster.groupby("Cluster").mean()
     cluster_sems = pred_cluster.groupby("Cluster").sem()
 
-    script = pd.read_excel(
-        f"{DEFAULT_SHARED_DIR}/{SCRIPT_FNAME}", index_col="Session"
-    )
+    script = pd.read_excel(SCRIPT_PATH, index_col="Session")
     shocked = script.loc["Shocked"].values.astype(int)
 
     return cluster_means, cluster_sems, shocked
@@ -407,14 +468,18 @@ def plot_trial_pshock(cluster_means, cluster_sems, shocked):
                 )
 
         ax.axvline(x=15.5, color="k", linestyle="--", linewidth=1.0, alpha=0.5)
-        ax.text(8, 1.05, "Opponent 1", ha="center", fontsize=10)
-        ax.text(23, 1.05, "Opponent 2", ha="center", fontsize=10)
+        ax.text(8, 1.05, "Opponent 1", ha="center", fontsize=10, fontweight="bold")
+        ax.text(23, 1.05, "Opponent 2", ha="center", fontsize=10, fontweight="bold")
 
-        ax.set_xlabel("Trial")
-        ax.set_ylabel("P(shock)")
+        ax.set_xlabel("Trial", fontweight="bold")
+        ax.set_ylabel("P(shock)", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.set_ylim(-0.05, 1.1)
         ax.set_xlim(0.5, 30.5)
-        ax.legend(title="", frameon=False, bbox_to_anchor=(1, 0.95))
+        legend = ax.legend(title="", frameon=False, bbox_to_anchor=(1, 0.95))
+        for text in legend.get_texts():
+            text.set_fontweight("bold")
         ax.set_axisbelow(True)
 
         stem = f"{FIG3_DIR}/fig3d_trial_pshock"
@@ -447,3 +512,6 @@ if __name__ == "__main__":
 
     # Fig S3b
     plot_vba_cov_stats(vba_cov_stats)
+
+    # Fig S7
+    plot_coef_distributions()

@@ -87,7 +87,9 @@ def plot_shocks_per_cluster(posterior, bf):
         )
 
         ax.set_xlabel("")
-        ax.set_ylabel("Shocks given [0-15]")
+        ax.set_ylabel("Shocks given [0-15]", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
         ax.legend().remove()
         ax.set_axisbelow(True)
         ax.yaxis.set_major_locator(plt.MaxNLocator(integer=True))
@@ -104,7 +106,7 @@ def plot_shocks_per_cluster(posterior, bf):
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG3_DIR}/tableS5_shocks_cluster.md"
+    table_path = f"{FIG3_DIR}/tableS7_shocks_cluster.md"
     bf.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 

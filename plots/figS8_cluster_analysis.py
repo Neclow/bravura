@@ -52,17 +52,19 @@ def plot_silhouette_k(sens_k):
         fig, ax = plt.subplots(figsize=(4, 3))
         ax.plot(sens_k.index, sens_k["silhouette"], "o-", color="k")
         ax.axvline(K_BEST, linestyle="--", color="gray", alpha=0.5)
-        ax.set_xlabel("# Clusters")
-        ax.set_ylabel("Silhouette score")
+        ax.set_xlabel("# Clusters", fontweight="bold")
+        ax.set_ylabel("Silhouette score", fontweight="bold")
         ax.set_xticks(sens_k.index)
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
 
-        stem = f"{FIG_DIR}/figS4a_silhouette_k"
+        stem = f"{FIG_DIR}/figS8a_silhouette_k"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG_DIR}/tableS10_silhouette_k.md"
+    table_path = f"{FIG_DIR}/tableS1_silhouette_k.md"
     sens_k.round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 
@@ -74,11 +76,13 @@ def plot_gap_statistic(sens_k):
         ax.plot(sens_k.index, sens_k["gap_diff"], marker="o", color="k")
         ax.axhline(0, ls="--", color="grey", lw=0.8)
         ax.axvline(K_BEST, ls="--", color="grey", lw=0.8)
-        ax.set_xlabel("# Clusters")
-        ax.set_ylabel("Gap difference")
+        ax.set_xlabel("# Clusters", fontweight="bold")
+        ax.set_ylabel("Gap difference", fontweight="bold")
+        for label in ax.get_xticklabels() + ax.get_yticklabels():
+            label.set_fontweight("bold")
 
         plt.tight_layout()
-        stem = f"{FIG_DIR}/figS4b_gap_statistic"
+        stem = f"{FIG_DIR}/figS8b_gap_statistic"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -103,28 +107,23 @@ def plot_silhouette_subjects(Xa_scaled, labels):
                 edgecolor="none",
             )
             ax.text(
-                0.5,
+                0.55,
                 y_lower + len(cluster_sils) / 2,
                 CLUSTER_NAMES[c],
-                ha="right",
+                ha="left",
                 va="center",
                 fontsize=8,
+                fontweight="bold",
             )
             y_lower += len(cluster_sils)
 
-        ax.axvline(
-            sample_sils.mean(),
-            color="k",
-            linestyle="--",
-            linewidth=0.8,
-            label=f"Mean: {sample_sils.mean():.3f}",
-        )
-        ax.set_xlabel("Silhouette coefficient")
-        ax.set_ylabel("Subjects")
+        ax.set_xlabel("Silhouette coefficient", fontweight="bold")
+        ax.set_ylabel("Subjects", fontweight="bold")
         ax.set_yticks([])
-        ax.legend(fontsize=8)
+        for label in ax.get_xticklabels():
+            label.set_fontweight("bold")
 
-        stem = f"{FIG_DIR}/figS4c_silhouette_plot"
+        stem = f"{FIG_DIR}/figS8c_silhouette_plot"
         plt.savefig(f"{stem}.pdf", bbox_inches="tight")
         plt.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -144,3 +143,15 @@ if __name__ == "__main__":
     plot_silhouette_k(sens_k)
     plot_gap_statistic(sens_k)
     plot_silhouette_subjects(Xa_scaled, labels)
+
+    grid_path = f"{FIG_DIR}/tableS1_cluster_comparison.md"
+    pd.read_csv(f"{SENSITIVITY_DIR}/grid_k_solver.csv").round(3).to_markdown(
+        grid_path, index=False
+    )
+    print(f"Saved {grid_path}")
+
+    ablate_path = f"{FIG_DIR}/tableS2_cluster_ablate_metric.md"
+    pd.read_csv(f"{SENSITIVITY_DIR}/ablate_metric.csv").round(3).to_markdown(
+        ablate_path, index=False
+    )
+    print(f"Saved {ablate_path}")
