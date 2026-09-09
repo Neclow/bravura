@@ -162,3 +162,8 @@ CLAUDE.md
 # Images (temporary)
 img/
 img_v2/
+
+# Data: all but README.md
+data_v2/*
+!data_v2/README.md
+data_v2.tar.gz
