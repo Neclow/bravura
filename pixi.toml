@@ -55,9 +55,44 @@ fig3_shock_per_cluster = "python -m plots.fig3_shock_per_cluster"
 fig4_hr_baseline = "python -m plots.fig4_hr_baseline"
 fig4_hr_delta = "python -m plots.fig4_hr_delta"
 figS1_participants = "python -m plots.figS1_participants"
-figS4_cluster_analysis = "python -m plots.figS4_cluster_analysis"
-figS5_latency = "python -m plots.figS5_latency"
-figS8_cardiac = "python -m plots.figS8_cardiac"
+figS8_cluster_analysis = "python -m plots.figS8_cluster_analysis"
+figS10_latency = "python -m plots.figS10_latency"
+figS12_psap_ppc = "Rscript plots/figS12_psap_ppc.R"
+figS17_cardiac = "python -m plots.figS17_cardiac"
+figS18_mv_cardiac_ppc = "Rscript plots/figS18_mv_cardiac_ppc.R"
+tableS3_brms_summary = "Rscript plots/tableS3_brms_summary.R"
+
+[tasks.fig2]
+cmd = "echo 'All fig2 plots done.'"
+depends-on = [
+    "fig2_belief",
+    "fig2_shocks_given",
+    "fig2_trial_duration",
+    "figS1_participants",
+]
+
+[tasks.fig3]
+cmd = "echo 'All fig3 plots done.'"
+depends-on = [
+    "fig3_decision_modelling",
+    "fig3_pca",
+    "fig3_psap",
+    "fig3_radar",
+    "fig3_shock_per_cluster",
+    "figS8_cluster_analysis",
+    "figS10_latency",
+    "figS12_psap_ppc",
+    "tableS3_brms_summary",
+]
+
+[tasks.fig4]
+cmd = "echo 'All fig4 plots done.'"
+depends-on = [
+    "fig4_hr_baseline",
+    "fig4_hr_delta",
+    "figS17_cardiac",
+    "figS18_mv_cardiac_ppc",
+]
 
 [pypi-dependencies]
 statannotations = ">=0.7.2, <0.8"
