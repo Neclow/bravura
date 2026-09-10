@@ -15,8 +15,6 @@ from sklearn.mixture import GaussianMixture
 from sklearn.preprocessing import StandardScaler
 from tqdm.auto import tqdm
 
-from src._config import DEFAULT_PROCESSED_DIR
-
 
 class AgglomerativeClusteringWrapper(AgglomerativeClustering):
     """
@@ -127,7 +125,6 @@ def fuzzy_fit_predict(
     n_b,
     ref_labels,
     n_samples,
-    save=False,
 ):
     scaler_means = []
     scaler_scales = []
@@ -161,20 +158,6 @@ def fuzzy_fit_predict(
     consensus_b = label_counts_b.argmax(axis=1)
     stability_a = (label_counts_a.max(axis=1) / n_samples).mean()
     stability_b = (label_counts_b.max(axis=1) / n_samples).mean()
-
-    if save:
-        np.savez_compressed(
-            f"{DEFAULT_PROCESSED_DIR}/mc_consensus_{solver}_{k}.npz",
-            label_counts_a=label_counts_a,
-            label_counts_b=label_counts_b,
-            consensus_a=consensus_a,
-            consensus_b=consensus_b,
-            stability_a=stability_a,
-            stability_b=stability_b,
-            scaler_means=scaler_means,
-            scaler_scales=scaler_scales,
-            n_samples=n_samples,
-        )
 
     return FuzzyClusterResult(
         consensus_a=consensus_a,
