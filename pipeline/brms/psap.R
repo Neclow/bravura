@@ -38,15 +38,17 @@ cat("\n\nPrior summary:\n")
 print(prior_summary(fit))
 sink()
 
-png(
+draws <- as.array(fit)
+pars <- dimnames(draws)$variable
+pars <- pars[!grepl("^r_|^lprior$|^lp__$", pars)]
+p <- bayesplot::mcmc_trace(draws, pars = pars)
+ggsave(
   file.path(dirichlet_dir, "trace_plots.png"),
+  p,
   width = 10,
-  height = 8,
-  units = "in",
-  res = 300
+  height = 16,
+  dpi = 300
 )
-print(plot(fit, ask = FALSE))
-dev.off()
 
 # Posterior predictions
 newdata <- expand.grid(
