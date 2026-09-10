@@ -1,18 +1,16 @@
 source("src/brms/utils.R")
 
 # Setup
-
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
 out_dir <- file.path(DEFAULT_BRMS_DIR, "psap")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-# psap_ilr.csv has noise-replaced zeros and renormalized proportions
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "psap_ilr.csv"))
+# Note: psap_ilr.csv has noise-replaced zeros and renormalized proportions
+df <- read.csv(file.path(DEFAULT_COHORT_A_DIR, "psap_ilr.csv"))
 
 # Model
-
 formula <- bf(cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 | p | Subject))
 
 fit <- fit_or_load(
@@ -51,7 +49,6 @@ print(plot(fit, ask = FALSE))
 dev.off()
 
 # Posterior predictions
-
 newdata <- expand.grid(
   Cluster = unique(df$Cluster),
   phase = unique(df$phase)
@@ -75,7 +72,6 @@ all_summary <- all_epred %>%
   )
 
 # Pairwise contrasts (CrI-based)
-
 bf_table <- pairwise_bf(
   epred = as.data.frame(all_epred),
   group_col = "Cluster",
@@ -92,7 +88,6 @@ cat("\nPairwise contrasts:\n")
 print(bf_table, digits = 3)
 
 # Save outputs
-
 write.csv(
   as.data.frame(fixef(fit)),
   file.path(out_dir, "fit_dirichlet_fixed_effects.csv")

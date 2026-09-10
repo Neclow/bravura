@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
+from scipy.io import loadmat
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import resample
@@ -12,8 +13,8 @@ from sklearn.utils import resample
 from src._config import (
     CLUSTER_PALETTE,
     CLUSTERS,
+    DEFAULT_CLUSTER_DIR_A,
     DEFAULT_DATA_DIR,
-    DEFAULT_PROCESSED_DIR,
 )
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE, SCRIPT_PATH
@@ -24,8 +25,9 @@ os.makedirs(FIG3_DIR, exist_ok=True)
 
 def load_data(cohort):
     cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
-    pred = pd.read_csv(f"{cohort_dir}/predictions.csv", header=None)
-    actual_vba = pd.read_csv(f"{cohort_dir}/decisions.csv", header=None)
+    vba_dir = f"{cohort_dir}/vba"
+    pred = pd.read_csv(f"{vba_dir}/predictions.csv", header=None)
+    actual_vba = pd.read_csv(f"{vba_dir}/decisions.csv", header=None)
     ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
     with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
         outliers = [line.strip() for line in f if line.strip()]
@@ -45,14 +47,35 @@ def load_data(cohort):
     shocked = script.loc["Shocked"].values.astype(int)
     wins = script.loc["Win"].values.astype(int)
 
-    corr_preds = loadmat(f"{cohort_dir}/corr_preds.mat")[
+    corr_preds = loadmat(f"{vba_dir}/corr_preds.mat")[
         "corr_preds"
     ]  # (n_simulations, 4, 4)
 
-    sim_rec = loadmat(f"{cohort_dir}/cov_stats.mat", squeeze_me=True)
+    sim_rec = loadmat(f"{vba_dir}/cov_stats.mat", squeeze_me=True)
     cov_stats = sim_rec["cov_stats"]  # (126, 2): [determinant, condition_number]
 
-    return actual_sorted, pred_sorted, shocked, wins, corr_preds, cov_stats
+    # Per-cluster trial-by-trial P(shock) summaries
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
+    pred_cluster = pred.loc[Xa.index].copy()
+    pred_cluster["Cluster"] = Xa["Cluster"].values
+    cluster_means = pred_cluster.groupby("Cluster").mean()
+    cluster_sems = pred_cluster.groupby("Cluster").sem()
+
+    # Coefficient distributions (filtered to included subjects)
+    coefs = pd.read_csv(f"{vba_dir}/coefficients.csv", index_col="Row")
+    coefs = coefs.loc[included]
+
+    return (
+        actual_sorted,
+        pred_sorted,
+        shocked,
+        wins,
+        corr_preds,
+        cov_stats,
+        cluster_means,
+        cluster_sems,
+        coefs,
+    )
 
 
 def plot_decisions(actual_sorted, pred_sorted, shocked, wins):
@@ -366,24 +389,20 @@ COEF_LABELS = {
 }
 
 
-def plot_coef_distributions(cohort="a"):
+def plot_coef_distributions(coefs):
     """Plot VBA coefficient distributions for included subjects (Fig. S7)."""
-    cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
-    coefs = pd.read_csv(f"{cohort_dir}/coefficients.csv", index_col="Row")
-
-    ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
-    with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
-        outliers = [line.strip() for line in f if line.strip()]
-    included = ids["subject"][~ids["subject"].isin(outliers)]
-    coefs = coefs.loc[included]
-
     with plt.style.context(DEFAULT_STYLE):
         fig, axes = plt.subplots(1, 4, figsize=(10, 2.5), sharey=True)
 
         for ax, (col, label) in zip(axes, COEF_LABELS.items()):
             sns.histplot(
-                coefs[col], kde=True, color="k", ax=ax,
-                bins=15, edgecolor="white", linewidth=0.5,
+                coefs[col],
+                kde=True,
+                color="k",
+                ax=ax,
+                bins=15,
+                edgecolor="white",
+                linewidth=0.5,
             )
             ax.set_xlabel(label, fontweight="bold")
             ax.set_ylabel("")
@@ -403,36 +422,6 @@ def plot_coef_distributions(cohort="a"):
         f.write(coefs.describe().round(3).to_string())
         f.write("\n")
     print(f"Saved {stem}_stats.txt")
-
-
-def load_trial_pshock_data(cohort="a"):
-    """Load per-cluster trial-by-trial P(shock) summaries.
-
-    Returns
-    -------
-    cluster_means : DataFrame
-        Mean predicted P(shock) per cluster per trial.
-    cluster_sems : DataFrame
-        SEM of predicted P(shock) per cluster per trial.
-    shocked : ndarray
-        Binary opponent-shock schedule (length 30).
-    """
-    cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
-    pred = pd.read_csv(f"{cohort_dir}/predictions.csv", header=None)
-    ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
-    pred.index = ids["subject"]
-
-    Xa = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
-    pred_cluster = pred.loc[Xa.index].copy()
-    pred_cluster["Cluster"] = Xa["Cluster"].values
-
-    cluster_means = pred_cluster.groupby("Cluster").mean()
-    cluster_sems = pred_cluster.groupby("Cluster").sem()
-
-    script = pd.read_excel(SCRIPT_PATH, index_col="Session")
-    shocked = script.loc["Shocked"].values.astype(int)
-
-    return cluster_means, cluster_sems, shocked
 
 
 def plot_trial_pshock(cluster_means, cluster_sems, shocked):
@@ -490,16 +479,23 @@ def plot_trial_pshock(cluster_means, cluster_sems, shocked):
 
 
 if __name__ == "__main__":
-    actual_sorted, pred_sorted, shocked, wins, vba_corr_preds, vba_cov_stats = (
-        load_data(cohort="a")
-    )
+    (
+        actual_sorted,
+        pred_sorted,
+        shocked,
+        wins,
+        vba_corr_preds,
+        vba_cov_stats,
+        cl_means,
+        cl_sems,
+        coefs,
+    ) = load_data(cohort="a")
 
     # Fig 3a
     plot_decisions(actual_sorted, pred_sorted, shocked, wins)
 
     # Fig 3d
-    cl_means, cl_sems, shocked_schedule = load_trial_pshock_data()
-    plot_trial_pshock(cl_means, cl_sems, shocked_schedule)
+    plot_trial_pshock(cl_means, cl_sems, shocked)
 
     # Fig S2a
     plot_roc(actual_sorted, pred_sorted)
@@ -514,4 +510,4 @@ if __name__ == "__main__":
     plot_vba_cov_stats(vba_cov_stats)
 
     # Fig S7
-    plot_coef_distributions()
+    plot_coef_distributions(coefs)

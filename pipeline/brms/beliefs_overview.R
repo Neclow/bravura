@@ -24,8 +24,8 @@ load_beliefs <- function(path, cohort_label) {
 }
 
 df <- rbind(
-  load_beliefs(file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"), "A"),
-  load_beliefs(file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"), "B")
+  load_beliefs(file.path(DEFAULT_CLUSTER_DIR_A, "clusters.csv"), "A"),
+  load_beliefs(file.path(DEFAULT_CLUSTER_DIR_B, "clusters.csv"), "B")
 )
 df$cohort <- factor(df$cohort)
 

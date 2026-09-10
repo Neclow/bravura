@@ -6,7 +6,7 @@ import seaborn as sns
 
 from statannotations.Annotator import Annotator
 
-from src._config import CLUSTER_PALETTE, CLUSTERS, DEFAULT_BRMS_DIR
+from src._config import CLUSTER_PALETTE, DEFAULT_BRMS_DIR
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 

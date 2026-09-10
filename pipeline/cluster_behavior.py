@@ -5,7 +5,7 @@
 Phase 1:  Grid search (deterministic, fast):
     k × solver silhouette + gap statistic table.
 Phase 2: Fit_predict with chosen k and solver (deterministic):
-    Save behav_Xa.csv and behav_Xb.csv (with cluster labels).
+    Save clusters.csv (with cluster labels).
 Phase 3: MC-based clustering:
     fuzzy_fit_predict with chosen k and solver, save consensus robustness metrics.
 Phase 4: Metric ablation (deterministic):

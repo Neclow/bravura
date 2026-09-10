@@ -11,8 +11,7 @@ out_dir <- file.path(DEFAULT_BRMS_DIR, "baseline_hr")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Load data
-
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "baseline_hr.csv"))
+df <- read.csv(file.path(DEFAULT_PHYSIO_DIR_A, "baseline_hr.csv"))
 df$Cluster <- factor(
   df$Cluster,
   levels = c("Non-aggressive", "Proactive", "Reactive")
@@ -27,7 +26,6 @@ print(tapply(df$HR_Pre, df$Cluster, function(x) {
 cat("\n")
 
 # Fit model
-
 priors <- c(
   prior(normal(85, 15), class = "Intercept"),
   prior(normal(0, 10), class = "b"),
@@ -53,7 +51,6 @@ cat("Fixed effects:\n")
 print(round(fixef(fit), 2))
 
 # Savage-Dickey BFs
-
 fit_prior <- fit_or_load(
   "fit_baseline_hr_prior",
   out_dir,
@@ -88,7 +85,6 @@ write.csv(
 )
 
 # Posterior predicted means per cluster
-
 newdata <- data.frame(Cluster = levels(df$Cluster))
 
 epred_long <- newdata %>%
@@ -119,7 +115,6 @@ cat("\nPredicted means:\n")
 print(pred_summary)
 
 # Diagnostics
-
 save_diagnostics(
   fit,
   "student-t baseline HR",

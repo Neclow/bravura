@@ -14,9 +14,10 @@ from src._config import (
     CLUSTER_PALETTE,
     CLUSTERS,
     DEFAULT_BRMS_DIR,
+    DEFAULT_CLUSTER_DIR_A,
     DEFAULT_DATA_DIR,
-    DEFAULT_PROCESSED_DIR,
-    PALETTE,
+    DEFAULT_PHYSIO_DIR_A,
+    DEFAULT_PHYSIO_DIR_B,
 )
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
@@ -31,7 +32,6 @@ HR_COLS = ["HR_Pre", "HR_Op1T1", "HR_Op1T2", "HR_Op2T1", "HR_Op2T2"]
 BLOCK_LABELS = ["Pre", "1.1", "1.2", "2.1", "2.2"]
 
 
-
 def parse_contrast(contrast):
     """'(Non-aggressive) - Proactive' -> ('Non-aggressive', 'Proactive')."""
     parts = contrast.split(" - ")
@@ -39,8 +39,6 @@ def parse_contrast(contrast):
 
 
 # Data loaders
-
-
 def load_delta_hr_data():
     """Load delta-HR brms posterior and Bayes factors (Fig. 4b).
 
@@ -67,8 +65,8 @@ def load_delta1_data():
     delta1 : DataFrame
         Delta1-HR per subject with Cluster and cohort columns.
     """
-    delta_a = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/delta_hr_long.csv")
-    delta_b = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/delta_hr_long_b.csv")
+    delta_a = pd.read_csv(f"{DEFAULT_PHYSIO_DIR_A}/delta_hr_long.csv")
+    delta_b = pd.read_csv(f"{DEFAULT_PHYSIO_DIR_B}/delta_hr_long.csv")
 
     d1_a = delta_a[delta_a["block"] == 1.1][["subject", "Cluster", "delta_hr"]].copy()
     d1_a["cohort"] = "A"
@@ -92,9 +90,9 @@ def load_hr_timecourse_data():
     labels : Series
         Cluster labels aligned to physio_hr index.
     """
-    behav = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
+    behav = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
     physio = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/cohort_a/physPerformance.xlsx", index_col="Subject"
+        f"{DEFAULT_PHYSIO_DIR_A}/physPerformance.xlsx", index_col="Subject"
     )
 
     shared = behav.index.intersection(physio.index)
@@ -125,8 +123,6 @@ def load_hr_timecourse_data():
 
 
 # Annotation helpers
-
-
 def build_delta_hr_annotations(bf):
     """Build annotation pairs from significant delta-HR BFs.
 
@@ -146,8 +142,6 @@ def build_delta_hr_annotations(bf):
 
 
 # Plot functions
-
-
 def plot_delta_hr(posterior, bf):
     """Plot delta-HR by cluster x block with BF annotations (Fig. 4b)."""
     pairs, annot_labels = build_delta_hr_annotations(bf)

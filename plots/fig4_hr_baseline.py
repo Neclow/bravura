@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from src._config import CLUSTER_PALETTE, CLUSTERS, DEFAULT_BRMS_DIR, DEFAULT_PROCESSED_DIR
+from src._config import CLUSTER_PALETTE, DEFAULT_BRMS_DIR, DEFAULT_PHYSIO_DIR_A
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 
@@ -29,7 +29,7 @@ def load_data():
     posterior = pd.read_csv(f"{POSTERIOR_DIR}/posterior_epred.csv").drop(
         columns=[".row", ".draw"], errors="ignore"
     )
-    observed = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/baseline_hr.csv")
+    observed = pd.read_csv(f"{DEFAULT_PHYSIO_DIR_A}/baseline_hr.csv")
     return posterior, observed
 
 

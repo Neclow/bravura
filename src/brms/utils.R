@@ -23,7 +23,12 @@ PAPER_THEME <- theme_minimal(base_size = 9, base_family = "Arial") +
 
 DEFAULT_DATA_DIR <- "data_v2"
 DEFAULT_BRMS_DIR <- file.path(DEFAULT_DATA_DIR, "brms")
-DEFAULT_PROCESSED_DIR <- file.path(DEFAULT_DATA_DIR, "processed")
+DEFAULT_COHORT_A_DIR <- file.path(DEFAULT_DATA_DIR, "cohort_a")
+DEFAULT_COHORT_B_DIR <- file.path(DEFAULT_DATA_DIR, "cohort_b")
+DEFAULT_CLUSTER_DIR_A <- file.path(DEFAULT_COHORT_A_DIR, "clustering")
+DEFAULT_CLUSTER_DIR_B <- file.path(DEFAULT_COHORT_B_DIR, "clustering")
+DEFAULT_PHYSIO_DIR_A <- file.path(DEFAULT_COHORT_A_DIR, "physio")
+DEFAULT_PHYSIO_DIR_B <- file.path(DEFAULT_COHORT_B_DIR, "physio")
 
 SEED <- 42
 CHAINS <- 4

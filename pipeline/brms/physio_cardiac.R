@@ -15,8 +15,7 @@ out_dir <- file.path(DEFAULT_BRMS_DIR, "physio_cardiac")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Load data
-
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "physio_cardiac_long.csv"))
+df <- read.csv(file.path(DEFAULT_PHYSIO_DIR_A, "physio_cardiac_long.csv"))
 
 df$Cluster <- factor(
   df$Cluster,
@@ -33,7 +32,6 @@ cat("  Observations:", nrow(df), "\n")
 cat("  DVs: HR, HRV_RC1 (power), HRV_RC2 (vagal), HRV_RC3 (entropy)\n\n")
 
 # Formula
-
 formula_mv <- bf(
   mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~
     Cluster * block + (1 | p | subject)
@@ -41,7 +39,6 @@ formula_mv <- bf(
   set_rescor(TRUE)
 
 # Priors
-
 priors <- c(
   prior(normal(5, 5), class = "Intercept", resp = "HR"),
   prior(normal(0, 3), class = "Intercept", resp = "HRVRC1"),
@@ -63,7 +60,6 @@ priors <- c(
 )
 
 # Fit model
-
 fit <- fit_or_load(
   "fit_cardiac_varimax",
   out_dir,
@@ -83,7 +79,6 @@ fit <- fit_or_load(
 cat("Model fitted\n\n")
 
 # Diagnostics
-
 sink(file.path(out_dir, "summary.txt"))
 cat("Multivariate student-t RI model (HR + 3 varimax HRV RCs)\n\n")
 summary(fit)
@@ -102,7 +97,6 @@ plot(fit, ask = FALSE)
 dev.off()
 
 # Per-DV emmeans contrasts
-
 dvs <- c("HR", "HRVRC1", "HRVRC2", "HRVRC3")
 dv_labels <- c("HR", "HRV_RC1", "HRV_RC2", "HRV_RC3")
 
@@ -129,7 +123,6 @@ write.csv(
 )
 
 # Fixed effects per DV
-
 for (i in seq_along(dvs)) {
   fe <- fixef(fit, resp = dvs[i])
   write.csv(

@@ -9,9 +9,9 @@ from sklearn.preprocessing import StandardScaler
 
 from src._config import (
     CLUSTER_NAMES,
+    DEFAULT_CLUSTER_DIR_A,
     DEFAULT_CLUSTERING_FEATURES,
     DEFAULT_DATA_DIR,
-    DEFAULT_PROCESSED_DIR,
     PALETTE,
 )
 
@@ -19,8 +19,6 @@ from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 
 FIG_DIR = f"{DEFAULT_IMG_DIR}/fig3"
 os.makedirs(FIG_DIR, exist_ok=True)
-
-SENSITIVITY_DIR = f"{DEFAULT_DATA_DIR}/processed/sensitivity_clustering"
 
 K_BEST = 3
 
@@ -37,9 +35,9 @@ def load_data():
     labels : ndarray
         Consensus cluster labels for Cohort A.
     """
-    sens_k = pd.read_csv(f"{SENSITIVITY_DIR}/best_solver_ablate_k.csv", index_col="k")
+    sens_k = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/ablate_k.csv", index_col="k")
 
-    Xa = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
     Xa_scaled = StandardScaler().fit_transform(Xa[DEFAULT_CLUSTERING_FEATURES])
     labels = Xa["label"].values
 
@@ -52,8 +50,11 @@ def plot_silhouette_k(sens_k):
         fig, ax = plt.subplots(figsize=(4, 3))
         ax.plot(sens_k.index, sens_k["silhouette"], "o-", color="k")
         ax.axvline(K_BEST, linestyle="--", color="gray", alpha=0.5)
+        ax.axvline(4, linestyle=":", color="red", alpha=0.6)
         ax.set_xlabel("# Clusters", fontweight="bold")
         ax.set_ylabel("Silhouette score", fontweight="bold")
+        ax.set_ylim(0.2, 0.3)
+        ax.yaxis.set_major_locator(plt.MultipleLocator(0.025))
         ax.set_xticks(sens_k.index)
         for label in ax.get_xticklabels() + ax.get_yticklabels():
             label.set_fontweight("bold")
@@ -145,13 +146,13 @@ if __name__ == "__main__":
     plot_silhouette_subjects(Xa_scaled, labels)
 
     grid_path = f"{FIG_DIR}/tableS1_cluster_comparison.md"
-    pd.read_csv(f"{SENSITIVITY_DIR}/grid_k_solver.csv").round(3).to_markdown(
+    pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/grid_k_solver.csv").round(3).to_markdown(
         grid_path, index=False
     )
     print(f"Saved {grid_path}")
 
     ablate_path = f"{FIG_DIR}/tableS2_cluster_ablate_metric.md"
-    pd.read_csv(f"{SENSITIVITY_DIR}/ablate_metric.csv").round(3).to_markdown(
+    pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/ablate_metric.csv").round(3).to_markdown(
         ablate_path, index=False
     )
     print(f"Saved {ablate_path}")

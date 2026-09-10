@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name, invalid-name
+
 import os
 
 import matplotlib.pyplot as plt
@@ -11,10 +13,9 @@ from statannotations.Annotator import Annotator
 
 from src._config import (
     CLUSTER_PALETTE,
-    CLUSTERS,
     DEFAULT_BRMS_DIR,
+    DEFAULT_CLUSTER_DIR_A,
     DEFAULT_DATA_DIR,
-    DEFAULT_PROCESSED_DIR,
     RANDOM_SEED,
 )
 from src.cluster2 import fit_predict
@@ -150,7 +151,7 @@ def load_psap_clustering_data():
     """
     psap = pd.read_excel(f"{DEFAULT_DATA_DIR}/raw/additional.xlsx").set_index("Subject")
 
-    Xa = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
 
     psap_cluster = (
         psap[PSAP_FEATURES].join(Xa[["label", "Cluster"]], how="inner").dropna()

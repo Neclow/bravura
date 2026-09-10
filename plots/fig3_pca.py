@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name, invalid-name
+
 import os
 
 import matplotlib.pyplot as plt
@@ -12,8 +14,9 @@ from sklearn.preprocessing import StandardScaler
 
 from src._config import (
     CLUSTERS,
+    DEFAULT_CLUSTER_DIR_A,
+    DEFAULT_CLUSTER_DIR_B,
     DEFAULT_CLUSTERING_FEATURES,
-    DEFAULT_PROCESSED_DIR,
     PALETTE,
     RANDOM_SEED,
 )
@@ -46,8 +49,8 @@ def load_data():
     explained_variance_ratio : ndarray
         Explained variance ratio for PC1 and PC2.
     """
-    Xa = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
-    Xb = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xb.csv", index_col="Row")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
+    Xb = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_B}/clusters.csv", index_col="Row")
 
     Xa_scaled = StandardScaler().fit_transform(Xa[DEFAULT_CLUSTERING_FEATURES])
     pca = PCA(n_components=2, random_state=RANDOM_SEED)

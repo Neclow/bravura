@@ -1,7 +1,6 @@
 source("src/brms/utils.R")
 
 # Setup
-
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
@@ -9,8 +8,7 @@ out_dir <- file.path(DEFAULT_BRMS_DIR, "shocks_overview")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Data preparation
-# Derive shock counts from behav_Xa and behav_Xb (both cohorts, included only)
-
+# Derive shock counts from behavioural data
 load_shocks <- function(path, cohort_label) {
   raw <- read.csv(path, row.names = 1)
   data.frame(
@@ -22,8 +20,8 @@ load_shocks <- function(path, cohort_label) {
 }
 
 df <- rbind(
-  load_shocks(file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"), "A"),
-  load_shocks(file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"), "B")
+  load_shocks(file.path(DEFAULT_CLUSTER_DIR_A, "clusters.csv"), "A"),
+  load_shocks(file.path(DEFAULT_CLUSTER_DIR_B, "clusters.csv"), "B")
 )
 df$cohort <- factor(df$cohort)
 
@@ -42,12 +40,10 @@ print(
 
 # Formula
 # Population-level opponent effect (no Cluster), random intercept by subject
-
 formula <- shocks | trials(15) ~ opponent * cohort + (1 | subject)
 
 # Priors
 # Mean ~5 shocks/15 => logit(5/15) ~ -0.4; opponent 2 provokes more => positive slope
-
 priors <- c(
   prior(normal(0, 2), class = "Intercept"),
   prior(normal(0, 1), class = "b"),
@@ -55,7 +51,6 @@ priors <- c(
 )
 
 # Fit model
-
 fit <- fit_or_load(
   "fit_binomial",
   out_dir,
@@ -71,7 +66,6 @@ fit <- fit_or_load(
 )
 
 # Prior-only model for Savage-Dickey BF
-
 fit_prior <- fit_or_load(
   "fit_prior",
   out_dir,
@@ -88,7 +82,6 @@ fit_prior <- fit_or_load(
 )
 
 # Diagnostics
-
 save_diagnostics(
   fit,
   "binomial RI (opponent * cohort)",
@@ -101,7 +94,6 @@ save_diagnostics(
 )
 
 # Predicted means per opponent
-
 newdata <- expand.grid(
   opponent = levels(df$opponent),
   cohort = levels(df$cohort)
@@ -133,7 +125,6 @@ write.csv(
 )
 
 # Opponent effect BF (Savage-Dickey)
-
 em_posterior <- emmeans(fit, pairwise ~ opponent | cohort)
 em_prior <- emmeans(fit_prior, pairwise ~ opponent | cohort)
 

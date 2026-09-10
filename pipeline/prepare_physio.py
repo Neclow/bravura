@@ -9,8 +9,6 @@ Phase 3: Cardiac multivariate:
     Delta HR + varimax-rotated HRV RC1-3 → physio_cardiac_long.csv.
 """
 
-import os
-
 import numpy as np
 import pandas as pd
 
@@ -19,10 +17,21 @@ from sklearn.preprocessing import StandardScaler
 
 from src._config import (
     CLUSTER_NAMES,
-    DEFAULT_DATA_DIR,
-    DEFAULT_PROCESSED_DIR,
+    DEFAULT_CLUSTER_DIR_A,
+    DEFAULT_CLUSTER_DIR_B,
+    DEFAULT_PHYSIO_DIR_A,
+    DEFAULT_PHYSIO_DIR_B,
     RANDOM_SEED,
 )
+
+CLUSTER_DIRS = {
+    "a": DEFAULT_CLUSTER_DIR_A,
+    "b": DEFAULT_CLUSTER_DIR_B,
+}
+PHYSIO_DIRS = {
+    "a": DEFAULT_PHYSIO_DIR_A,
+    "b": DEFAULT_PHYSIO_DIR_B,
+}
 
 # Feature sets
 HRV_FEATS = [
@@ -70,9 +79,9 @@ def load_physio(cohort):
     labels : pd.Series
         Integer cluster labels indexed by subject.
     """
-    behav = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_X{cohort}.csv", index_col=0)
+    behav = pd.read_csv(f"{CLUSTER_DIRS[cohort]}/clusters.csv", index_col=0)
     physio = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/physPerformance.xlsx",
+        f"{PHYSIO_DIRS[cohort]}/physPerformance.xlsx",
         index_col="Subject",
     )
 
@@ -176,7 +185,6 @@ def export_baseline_hr(physio, labels, out_dir):
     path = f"{out_dir}/baseline_hr.csv"
     df.to_csv(path, index=False)
     print(f"Saved {len(df)} rows to {path}")
-    print(df.groupby("Cluster")["HR_Pre"].describe().round(2))
     print()
 
 
@@ -259,20 +267,17 @@ def export_cardiac(physio, labels, out_dir):
 
 # Main
 if __name__ == "__main__":
-    os.makedirs(DEFAULT_PROCESSED_DIR, exist_ok=True)
-    out = DEFAULT_PROCESSED_DIR
-
     physio_a, labels_a = load_physio("a")
     physio_b, labels_b = load_physio("b")
     print()
 
-    print("=== Phase 1: Baseline HR ===")
-    export_baseline_hr(physio_a, labels_a, out)
+    print("=== Phase 1: Baseline HR (Cohort A)===")
+    export_baseline_hr(physio_a, labels_a, out_dir=DEFAULT_PHYSIO_DIR_A)
 
-    print("=== Phase 2: Delta HR ===")
-    export_delta_hr(physio_a, labels_a, "a", out)
-    export_delta_hr(physio_b, labels_b, "b", out)
+    print("=== Phase 2: Delta HR (both cohorts) ===")
+    export_delta_hr(physio_a, labels_a, "a", out_dir=DEFAULT_PHYSIO_DIR_A)
+    export_delta_hr(physio_b, labels_b, "b", out_dir=DEFAULT_PHYSIO_DIR_B)
     print()
 
-    print("=== Phase 3: Cardiac (HR + varimax HRV RC1-3) ===")
-    export_cardiac(physio_a, labels_a, out)
+    print("=== Phase 3: Cardiac (HR + varimax HRV RC1-3; Cohort A) ===")
+    export_cardiac(physio_a, labels_a, out_dir=DEFAULT_PHYSIO_DIR_A)

@@ -8,7 +8,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long.csv"))
+df <- read.csv(file.path(DEFAULT_PHYSIO_DIR_A, "delta_hr_long.csv"))
 
 df$Cluster <- factor(
   df$Cluster,

@@ -8,7 +8,7 @@ OVERWRITE <- "--overwrite" %in% args
 out_dir <- file.path(DEFAULT_BRMS_DIR, "shocks")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_long.csv"))
+df <- read.csv(file.path(DEFAULT_COHORT_A_DIR, "shock_long.csv"))
 
 # Formulas
 

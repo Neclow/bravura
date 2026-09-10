@@ -23,8 +23,6 @@ DECISION_MAP = {
 }
 DECISION_LABELS = ["Enlarge loop", "Give shock"]
 
-TEST_SUBJECTS = ["P089"]
-
 
 def _parse_contrast(contrast):
     parts = contrast.split(" - ")

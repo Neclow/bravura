@@ -3,7 +3,10 @@ from typing import Final
 # Figure directory
 DEFAULT_DATA_DIR: Final = "data_v2"
 DEFAULT_BRMS_DIR: Final = f"{DEFAULT_DATA_DIR}/brms"
-DEFAULT_PROCESSED_DIR: Final = f"{DEFAULT_DATA_DIR}/processed"
+DEFAULT_CLUSTER_DIR_A: Final = f"{DEFAULT_DATA_DIR}/cohort_a/clustering"
+DEFAULT_CLUSTER_DIR_B: Final = f"{DEFAULT_DATA_DIR}/cohort_b/clustering"
+DEFAULT_PHYSIO_DIR_A: Final = f"{DEFAULT_DATA_DIR}/cohort_a/physio"
+DEFAULT_PHYSIO_DIR_B: Final = f"{DEFAULT_DATA_DIR}/cohort_b/physio"
 DEFAULT_SHARED_DIR: Final = f"{DEFAULT_DATA_DIR}/shared"
 
 # Trial hyperparameters
@@ -32,28 +35,17 @@ PVALUE_MAP: Final = [[1e-3, "***"], [1e-2, "**"], [0.05, "*"], [1, "ns"]]
 RANDOM_SEED: Final = 42
 
 # Clustering parameters
-K_MIN: Final = 2
-K_MAX: Final = 13
-DEFAULT_CLUSTERING_FEATURES = [
-    "Kp",
-    "Kr1",
-    "Krc",
-    "Kwc",
-    "R2",
-    "shock_opp1",
-    "shock_opp2",
-    "first_shock",
-]
 FEATURE_LABELS = {
     "Kp": r"$K_p$",
     "Kr1": r"$K_{r_1}$",
     "Krc": r"$K_{r_c}$",
     "Kwc": r"$K_{w_c}$",
     "R2": r"$R^2$",
-    "shock_opp1": "Shocks(Opp. 1)",
-    "shock_opp2": "Shocks(Opp. 2)",
+    "shock_opp1": "Shocks\n(Opp. 1)",
+    "shock_opp2": "Shocks\n(Opp. 2)",
     "first_shock": "1st shock",
 }
+DEFAULT_CLUSTERING_FEATURES = list(FEATURE_LABELS.keys())
 
 # Clusters
 CLUSTERS = [

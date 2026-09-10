@@ -12,8 +12,7 @@ out_dir <- file.path(DEFAULT_BRMS_DIR, "latency")
 dir.create(out_dir, showWarnings = FALSE, recursive = TRUE)
 
 # Load data
-
-df <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "shock_latency_long.csv"))
+df <- read.csv(file.path(DEFAULT_COHORT_A_DIR, "shock_latency_long.csv"))
 
 df$Cluster <- factor(
   df$Cluster,
@@ -29,21 +28,19 @@ cat("  Per cluster:", table(df$Cluster[!duplicated(df$subject)]), "\n")
 cat("  Mean latency:", round(mean(df$latency), 3), "s\n\n")
 
 # Formula
-
 formula_ri <- latency ~ Cluster * opponent + (1 | subject)
 
 # Priors
-# Log-scale: log(0.75) ≈ -0.29, typical latencies ~0.7-0.9s
-
+# Log-scale: task bounds [4s, 10s] → [1.39, 2.30], midpoint ≈ 1.85
+# SD = 0.25 → 95% prior mass in [3.9s, 10.5s]
 priors <- c(
-  prior(normal(-0.3, 0.5), class = "Intercept"),
+  prior(normal(1.85, 0.25), class = "Intercept"),
   prior(normal(0, 0.3), class = "b"),
-  prior(student_t(3, 0, 0.5), class = "sd"),
-  prior(student_t(3, 0, 0.5), class = "sigma")
+  prior(student_t(3, 0, 0.3), class = "sd"),
+  prior(student_t(3, 0, 0.3), class = "sigma")
 )
 
 # Fit model
-
 fit <- fit_or_load(
   "fit_lognormal",
   out_dir,
@@ -62,7 +59,6 @@ fit <- fit_or_load(
 cat("Model fitted\n\n")
 
 # Diagnostics
-
 save_diagnostics(
   fit,
   "lognormal RI (shock latency)",
@@ -72,7 +68,6 @@ save_diagnostics(
 )
 
 # Posterior predicted means
-
 write.csv(as.data.frame(fixef(fit)), file.path(out_dir, "fixed_effects.csv"))
 
 newdata <- expand.grid(
@@ -108,7 +103,6 @@ cat("Predicted means (response scale):\n")
 print(pred_summary)
 
 # Pairwise contrasts (Savage-Dickey)
-
 fit_prior <- fit_or_load(
   "fit_prior_lognormal",
   out_dir,

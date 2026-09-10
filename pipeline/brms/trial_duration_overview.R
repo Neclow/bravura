@@ -15,11 +15,11 @@ trials <- read.csv(file.path(DEFAULT_DATA_DIR, "shared", "trial_events.csv"))
 
 # Get included subjects from behav_Xa (N=114) and behav_Xb (N=37)
 included_a <- rownames(read.csv(
-  file.path(DEFAULT_PROCESSED_DIR, "behav_Xa.csv"),
+  file.path(DEFAULT_CLUSTER_DIR_A, "clusters.csv"),
   row.names = 1
 ))
 included_b <- rownames(read.csv(
-  file.path(DEFAULT_PROCESSED_DIR, "behav_Xb.csv"),
+  file.path(DEFAULT_CLUSTER_DIR_B, "clusters.csv"),
   row.names = 1
 ))
 included <- c(included_a, included_b)

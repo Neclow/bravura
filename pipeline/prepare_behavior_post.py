@@ -1,60 +1,58 @@
 """Prepare intermediate behavioural CSVs for brms models.
 
-Reads behav_Xa.csv / behav_Xb.csv (from cluster_behavior) and raw data,
-produces:
+Reads clusters.csv outputs and raw data, produces:
     - shock_long.csv          (shocks.R)
     - psap_ilr.csv            (psap.R)
     - shock_latency_long.csv  (latency.R)
 """
 
-import os
-
 import numpy as np
 import pandas as pd
 
-from src._config import DEFAULT_DATA_DIR, DEFAULT_PROCESSED_DIR, RANDOM_SEED
+from src._config import (
+    DEFAULT_CLUSTER_DIR_A,
+    DEFAULT_DATA_DIR,
+    RANDOM_SEED,
+)
 
-PROCESSED = DEFAULT_PROCESSED_DIR
-SHARED = f"{DEFAULT_DATA_DIR}/shared"
-RAW = f"{DEFAULT_DATA_DIR}/raw"
+DATA_COHORT_A_DIR = f"{DEFAULT_DATA_DIR}/cohort_a"
+DATA_RAW_DIR = f"{DEFAULT_DATA_DIR}/raw"
+DATA_SHARED_DIR = f"{DEFAULT_DATA_DIR}/shared"
 
 
 def make_shock_long():
-    """Melt shock_opp1/shock_opp2 into long format (both cohorts)."""
-    dfs = []
-    for cohort, path in [("A", "behav_Xa.csv"), ("B", "behav_Xb.csv")]:
-        df = pd.read_csv(f"{PROCESSED}/{path}", index_col=0)
-        df.index.name = "subject"
-        long = (
-            df[["shock_opp1", "shock_opp2", "label", "Cluster"]]
-            .reset_index()
-            .melt(
-                id_vars=["subject", "label", "Cluster"],
-                value_vars=["shock_opp1", "shock_opp2"],
-                var_name="opponent",
-                value_name="shocks",
-            )
+    """Melt shock_opp1/shock_opp2 into long formatd."""
+    df = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col=0)
+    df.index.name = "subject"
+    out = (
+        df[["shock_opp1", "shock_opp2", "label", "Cluster"]]
+        .reset_index()
+        .melt(
+            id_vars=["subject", "label", "Cluster"],
+            value_vars=["shock_opp1", "shock_opp2"],
+            var_name="opponent",
+            value_name="shocks",
         )
-        long["opponent"] = long["opponent"].map(
-            {"shock_opp1": "Opponent 1", "shock_opp2": "Opponent 2"}
-        )
-        long["cohort"] = cohort
-        dfs.append(long)
+    )
+    out["opponent"] = out["opponent"].map(
+        {"shock_opp1": "Opponent 1", "shock_opp2": "Opponent 2"}
+    )
 
-    out = pd.concat(dfs, ignore_index=True)
-    out_path = f"{PROCESSED}/shock_long.csv"
+    out_path = f"{DATA_COHORT_A_DIR}/shock_long.csv"
     out.to_csv(out_path, index=False)
     print(f"Saved: {out_path} ({len(out)} rows)")
 
 
 def make_psap_ilr():
     """Noise-replace compositional zeros in PSAP data, merge cluster labels."""
-    Xa = pd.read_csv(f"{PROCESSED}/behav_Xa.csv", index_col=0)
-    psap = pd.read_excel(f"{RAW}/additional.xlsx", index_col="Subject")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col=0)
+    psap = pd.read_excel(f"{DATA_RAW_DIR}/additional.xlsx", index_col="Subject")
 
-    psap_cluster = psap[["pA", "pB", "pC", "rA", "rB", "rC"]].join(
-        Xa[["label", "Cluster"]], how="inner"
-    ).dropna()
+    psap_cluster = (
+        psap[["pA", "pB", "pC", "rA", "rB", "rC"]]
+        .join(Xa[["label", "Cluster"]], how="inner")
+        .dropna()
+    )
 
     psap_dir = psap_cluster.reset_index()
 
@@ -80,15 +78,15 @@ def make_psap_ilr():
         vals = vals / vals.sum()
         psap_comp.loc[i, buttons] = vals
 
-    out_path = f"{PROCESSED}/psap_ilr.csv"
+    out_path = f"{DATA_COHORT_A_DIR}/psap_ilr.csv"
     psap_comp.to_csv(out_path, index=False)
     print(f"Saved: {out_path} ({len(psap_comp)} rows)")
 
 
 def make_shock_latency_long():
     """Filter trial events to shock trials, join cluster labels."""
-    trials = pd.read_csv(f"{SHARED}/trial_events.csv")
-    Xa = pd.read_csv(f"{PROCESSED}/behav_Xa.csv", index_col=0)
+    trials = pd.read_csv(f"{DATA_SHARED_DIR}/trial_events.csv")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col=0)
 
     shocks = trials[trials["choice"] == "shock"].copy()
     shocks = shocks[shocks["subject"].isin(Xa.index)]
@@ -99,13 +97,12 @@ def make_shock_latency_long():
         columns={"duration": "latency"}
     )
 
-    out_path = f"{PROCESSED}/shock_latency_long.csv"
+    out_path = f"{DATA_COHORT_A_DIR}/shock_latency_long.csv"
     out.to_csv(out_path, index=False)
     print(f"Saved: {out_path} ({len(out)} rows)")
 
 
 if __name__ == "__main__":
-    os.makedirs(PROCESSED, exist_ok=True)
     make_shock_long()
     make_psap_ilr()
     make_shock_latency_long()

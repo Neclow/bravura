@@ -11,7 +11,7 @@ source("src/brms/utils.R")
 args <- commandArgs(trailingOnly = TRUE)
 OVERWRITE <- "--overwrite" %in% args
 
-base_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr_replication")
+base_dir <- file.path(DEFAULT_BRMS_DIR, "delta_hr_joint")
 dir.create(base_dir, showWarnings = FALSE, recursive = TRUE)
 
 CLUSTER_LEVELS <- c("Non-aggressive", "Proactive", "Reactive")
@@ -19,8 +19,8 @@ BLOCKS <- c(1.1, 2.1)
 
 # Load data
 
-df_a <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long.csv"))
-df_b <- read.csv(file.path(DEFAULT_PROCESSED_DIR, "delta_hr_long_b.csv"))
+df_a <- read.csv(file.path(DEFAULT_PHYSIO_DIR_A, "delta_hr_long.csv"))
+df_b <- read.csv(file.path(DEFAULT_PHYSIO_DIR_B, "delta_hr_long.csv"))
 
 # Matching delta_hr.R priors (scaled for single-block delta HR in bpm)
 

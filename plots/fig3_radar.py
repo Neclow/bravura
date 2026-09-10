@@ -8,8 +8,9 @@ from sklearn.preprocessing import MinMaxScaler
 
 from src._config import (
     CLUSTERS,
+    DEFAULT_CLUSTER_DIR_A,
+    DEFAULT_CLUSTER_DIR_B,
     DEFAULT_CLUSTERING_FEATURES,
-    DEFAULT_PROCESSED_DIR,
     FEATURE_LABELS,
     PALETTE,
 )
@@ -36,8 +37,8 @@ def load_data():
     cluster_means_b : ndarray, shape (3, n_features)
         Scaled cluster centroids for Cohort B (row i = label i).
     """
-    Xa = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xa.csv", index_col="Row")
-    Xb = pd.read_csv(f"{DEFAULT_PROCESSED_DIR}/behav_Xb.csv", index_col="Row")
+    Xa = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv", index_col="Row")
+    Xb = pd.read_csv(f"{DEFAULT_CLUSTER_DIR_B}/clusters.csv", index_col="Row")
 
     scaler = MinMaxScaler()
     scaler.fit(Xa[DEFAULT_CLUSTERING_FEATURES])
