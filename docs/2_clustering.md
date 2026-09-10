@@ -5,11 +5,23 @@ derived from VBA model coefficients and task performance.
 
 - **Command:** `pixi run cluster_behavior`
 - **Script:** `pipeline/cluster_behavior.py`
-- **Requires:** VBA export outputs for both cohorts ([1_vba.md](1_vba.md)).
+- **Requires:** VBA export outputs for both cohorts ([1_vba.md](1_vba.md))
+  and outlier lists (see below).
 - **Inputs:** Per-cohort files in `data_v2/cohort_{a,b}/`:
   `coefficients.csv`, `fit_metrics.csv`, `predictions.csv`, `decisions.csv`,
   `subject_ids.csv`, `vba_posteriors.mat`, `aggroPerformance.xlsx`,
-  `beliefs.xlsx`
+  `beliefs.xlsx`, `outliers.txt`
+
+## Prerequisite: outlier detection
+
+Identifies participants with extreme shock counts AND low belief scores.
+Must run before clustering.
+
+- **Command:** `pixi run prepare_behavior_pre`
+- **Script:** `pipeline/prepare_behavior_pre.py`
+- **Inputs:** Per-cohort `aggroPerformance.xlsx`, `beliefs.xlsx`
+- **Outputs:** Per-cohort `outliers.mat` (legacy), `outliers.txt`
+- **Thresholds:** `MIN_SHOCKS`, `MAX_SHOCKS`, `MIN_BELIEF` from `src/_config.py`
 - **Outputs:** See per-phase tables below.
 
 ## CLI arguments

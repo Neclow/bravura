@@ -4,15 +4,13 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 
-from scipy.io import loadmat
 from statannotations.Annotator import Annotator
 
-from src._config import DEFAULT_BRMS_DIR, DEFAULT_DATA_DIR, DEFAULT_SHARED_DIR
+from src._config import DEFAULT_BRMS_DIR
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 
 TRIAL_EVENTS_FNAME = "trial_events.csv"
-OUTLIERS_FNAME = "outliers.mat"
 POSTERIOR_DIR = f"{DEFAULT_BRMS_DIR}/trial_duration"
 FIG2_DIR = f"{DEFAULT_IMG_DIR}/fig2"
 os.makedirs(FIG2_DIR, exist_ok=True)
@@ -42,18 +40,6 @@ def plot_trial_duration(cohort):
         Cohort label, e.g. "A" or "B".
     """
     suffix = f"_{cohort.lower()}"
-
-    trials = pd.read_csv(f"{DEFAULT_SHARED_DIR}/{TRIAL_EVENTS_FNAME}")
-    trials_clean = trials[trials["duration"].between(0, 30)]
-    trials_cohort = trials_clean.query(f"cohort == '{cohort}'")
-    trials_cohort = trials_cohort[~trials_cohort["subject"].isin(TEST_SUBJECTS)]
-
-    outliers = loadmat(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort.lower()}/{OUTLIERS_FNAME}", squeeze_me=True
-    )["outliers"]
-    trials_cohort = trials_cohort[~trials_cohort["subject"].isin(outliers)]
-    trials_cohort["decision"] = trials_cohort["choice"].map(DECISION_MAP)
-    counts = trials_cohort.groupby("decision").size()
 
     duration_posterior = pd.read_csv(f"{POSTERIOR_DIR}/posterior_epred.csv")
     bf_duration = pd.read_csv(f"{POSTERIOR_DIR}/bayes_factors.csv")

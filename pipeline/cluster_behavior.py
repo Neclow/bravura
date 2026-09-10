@@ -38,6 +38,7 @@ from src.preprocessing import (
 )
 
 
+
 def parse_args():
     parser = ArgumentParser(description=__doc__)
     parser.add_argument(
@@ -76,47 +77,52 @@ K_RANGE = range(2, 11)
 def load_data(cohort):
     """Load VBA outputs, questionnaires, and build behavioural features.
 
+    Outliers are excluded using the pre-computed list from
+    pipeline/prepare_behavior_pre.py.
+
     Returns
     -------
     iterator : generator
         MC-sampled feature matrices (for fuzzy clustering).
-    X : pd.DataFrame
-        Deterministic features, metrics in COLS_TO_DROP removed.
     bma : pd.DataFrame
         Full feature set including all metrics.
     """
-    vba_metrics = pd.read_csv(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/fit_metrics.csv", index_col=0
-    )
-    vba_preds = pd.read_csv(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/predictions.csv", header=None
-    )
-    vba_actual = pd.read_csv(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/decisions.csv", header=None
-    )
+    cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
 
-    ids = pd.read_csv(f"{DEFAULT_DATA_DIR}/cohort_{cohort}/subject_ids.csv")
+    with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
+        outlier_ids = [line.strip() for line in f if line.strip()]
 
+    vba_metrics = pd.read_csv(f"{cohort_dir}/fit_metrics.csv", index_col=0)
+    vba_preds = pd.read_csv(f"{cohort_dir}/predictions.csv", header=None)
+    vba_actual = pd.read_csv(f"{cohort_dir}/decisions.csv", header=None)
+
+    ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
     vba_preds.index = ids["subject"]
     vba_actual.index = ids["subject"]
 
     all_metrics = collect_metrics(vba_metrics, vba_preds, vba_actual)
 
-    vba_posteriors = loadmat(f"{DEFAULT_DATA_DIR}/cohort_{cohort}/vba_posteriors.mat")
+    vba_posteriors = loadmat(f"{cohort_dir}/vba_posteriors.mat")
     coefs_mu = vba_posteriors["mu_all"]
     coefs_sigma = vba_posteriors["sigma_all"]
 
-    aggro = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/aggroPerformance.xlsx", index_col="Subject"
-    )
-    beliefs = pd.read_excel(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/beliefs.xlsx", index_col="ID"
-    )
+    aggro = pd.read_excel(f"{cohort_dir}/aggroPerformance.xlsx", index_col="Subject")
+    beliefs = pd.read_excel(f"{cohort_dir}/beliefs.xlsx", index_col="ID")
     if sorted(beliefs.columns) != ["opponent1", "opponent2"]:
         beliefs.rename(columns={k: k[4:] + k[0] for k in beliefs.columns}, inplace=True)
     beliefs.drop("opponent3", axis=1, errors="ignore", inplace=True)
     if cohort == "b":
         beliefs = beliefs * (MAX_BELIEF_COHORT_A / MAX_BELIEF_COHORT_B)
+
+    # Drop outliers from posteriors (aligned by row with subject_ids)
+    keep_mask = ~ids["subject"].isin(outlier_ids).values
+    coefs_mu = coefs_mu[keep_mask]
+    coefs_sigma = coefs_sigma[keep_mask]
+
+    # Drop outliers from tabular sources
+    all_metrics = all_metrics.drop(index=outlier_ids, errors="ignore")
+    aggro = aggro.drop(index=outlier_ids, errors="ignore")
+    beliefs = beliefs.drop(index=outlier_ids, errors="ignore")
 
     iterator = sample_behavioral_features(
         coefs_mu=coefs_mu,
@@ -128,15 +134,9 @@ def load_data(cohort):
         cols_to_use=DEFAULT_CLUSTERING_FEATURES,
     )
 
-    coefs = pd.read_csv(
-        f"{DEFAULT_DATA_DIR}/cohort_{cohort}/coefficients.csv", index_col=0
-    )
-    bma = load_behavioral_features(
-        coefs,
-        all_metrics,
-        aggro,
-        beliefs,
-    )
+    coefs = pd.read_csv(f"{cohort_dir}/coefficients.csv", index_col=0)
+    coefs = coefs.drop(index=outlier_ids, errors="ignore")
+    bma = load_behavioral_features(coefs, all_metrics, aggro, beliefs)
 
     return iterator, bma
 

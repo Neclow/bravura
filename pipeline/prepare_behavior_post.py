@@ -68,6 +68,7 @@ def make_psap_ilr():
 
     psap_comp = pd.concat([psap_pro, psap_rea], ignore_index=True)
 
+    # Replace zeros with small random noise for Dirichlet regression, then re-normalise
     rng = np.random.default_rng(RANDOM_SEED)
     buttons = ["Earn", "Steal", "Protect"]
     for i, row in psap_comp.iterrows():

@@ -3,8 +3,8 @@
 Reshapes clustered behavioural data into long-format CSVs consumed by brms
 models ([5_brms.md](5_brms.md)).
 
-- **Command:** `pixi run prepare_behavior`
-- **Script:** `pipeline/prepare_behavior.py`
+- **Command:** `pixi run prepare_behavior_post`
+- **Script:** `pipeline/prepare_behavior_post.py`
 - **Requires:** `behav_Xa.csv`, `behav_Xb.csv` from clustering
   ([2_clustering.md](2_clustering.md)).
 

@@ -2,6 +2,7 @@
 
 import numpy as np
 import pandas as pd
+
 from sklearn.experimental import enable_iterative_imputer  # noqa
 from sklearn.impute import IterativeImputer
 from sklearn.linear_model import BayesianRidge
@@ -10,9 +11,6 @@ from sklearn.metrics import brier_score_loss, roc_auc_score
 from src._config import (
     MAX_BELIEF_COHORT_A,
     MIN_BELIEF_COHORT_A,
-    MIN_BELIEF,
-    MIN_SHOCKS,
-    MAX_SHOCKS,
     N_OPPONENTS,
     N_TRIALS,
     RANDOM_SEED,
@@ -57,15 +55,15 @@ def collect_metrics(vba_metrics, pred, actual):
     return metrics
 
 
-def load_behavioral_features(coefs, metrics, aggro, beliefs=None, remove_outliers=True):
+def load_behavioral_features(coefs, metrics, aggro, beliefs=None):
     """Build the behavioral feature dataframe from raw data sources.
 
     Parameters
     ----------
     coefs : pd.DataFrame
         BMA coefficients (index=subject IDs, columns=Kr1, Krc, Kp, Kwc)
-    r2 : pd.Series
-        R² values per subject (index=subject IDs)
+    metrics : pd.DataFrame
+        Fit metrics per subject (index=subject IDs).
     aggro : pd.DataFrame
         aggroPerformance data (index=subject IDs)
     beliefs : pd.DataFrame
@@ -74,7 +72,8 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs=None, remove_outlier
     Returns
     -------
     pd.DataFrame
-        Combined behavioral features, with imputed beliefs and first_shock
+        Combined behavioral features, with imputed beliefs and first_shock.
+        Outlier removal is handled upstream (pipeline/prepare_behavior_pre.py).
     """
     shock_cols = sorted(
         [c for c in aggro.columns if c.startswith("shock")],
@@ -84,7 +83,6 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs=None, remove_outlier
     shock_opp1 = aggro[shock_cols[:N_TRIALS]].sum(axis=1)
     shock_opp2 = aggro[shock_cols[N_TRIALS : N_TRIALS * N_OPPONENTS]].sum(axis=1)
 
-    # First shock trial (0-indexed, or N_TRIALS*N_OPPONENTS if never shocked)
     shock_data = aggro[shock_cols]
     first_shock = shock_data.apply(
         lambda row: row.values.nonzero()[0][0] if row.any() else np.nan, axis=1
@@ -99,9 +97,6 @@ def load_behavioral_features(coefs, metrics, aggro, beliefs=None, remove_outlier
         df["belief_opp1"] = beliefs["opponent1"].reindex(df.index)
         df["belief_opp2"] = beliefs["opponent2"].reindex(df.index)
 
-    if remove_outliers:
-        outlier_ids = detect_outliers(df, aggro)
-        df.drop(index=outlier_ids, inplace=True)
     df = impute_missing(df)
 
     return df
@@ -113,7 +108,6 @@ def sample_behavioral_features(
     metrics,
     aggro,
     beliefs,
-    remove_outliers=True,
     n_samples=1000,
     random_state=RANDOM_SEED,
     cols_to_use=None,
@@ -122,6 +116,7 @@ def sample_behavioral_features(
 
     Resamples the 4 VBA coefficients from their posterior distributions;
     all other features (metrics, shocks, beliefs) stay fixed.
+    Outlier removal is handled upstream (pipeline/prepare_behavior_pre.py).
 
     Parameters
     ----------
@@ -143,65 +138,27 @@ def sample_behavioral_features(
     Yields
     ------
     pd.DataFrame
-        Sampled behavioral features (outliers already excluded, beliefs imputed).
+        Sampled behavioral features (beliefs imputed).
     """
     rng = np.random.default_rng(random_state)
     coef_cols = ["Kr1", "Krc", "Kp", "Kwc"]
 
-    all_coefs = np.empty((n_samples, *coefs_mu.shape))
-
-    for mc in range(n_samples):
+    for _ in range(n_samples):
         coefs_sampled = np.array(
             [
                 rng.multivariate_normal(mu, sigma)
                 for mu, sigma in zip(coefs_mu, coefs_sigma)
             ]
         )
-        all_coefs[mc] = coefs_sampled
         df_sampled = load_behavioral_features(
             coefs=pd.DataFrame(coefs_sampled, index=metrics.index, columns=coef_cols),
             metrics=metrics,
             aggro=aggro,
             beliefs=beliefs,
-            remove_outliers=remove_outliers,
         )
         if cols_to_use is not None:
             df_sampled = df_sampled[cols_to_use]
         yield df_sampled
-    # if save:
-    #     np.savez_compressed(
-    #         "data/cohort_a/mc_coefs.npz", coefs=all_coefs, seed=random_state
-    #     )
-
-
-def detect_outliers(df, aggro):
-    """Identify outlier participants based on belief and shock thresholds.
-
-    Parameters
-    ----------
-    df : pd.DataFrame
-        Behavioral features (must have belief_opp1, belief_opp2)
-    aggro : pd.DataFrame
-        aggroPerformance data
-
-    Returns
-    -------
-    pd.Index
-        Index of outlier subject IDs to exclude
-    """
-    shock_cols = [c for c in aggro.columns if c.startswith("shock")]
-    total_shocks = aggro[shock_cols].sum(axis=1)
-    mean_belief = df[["belief_opp1", "belief_opp2"]].mean(axis=1)
-
-    # Align
-    common = total_shocks.index.intersection(mean_belief.dropna().index)
-    shocks = total_shocks.loc[common]
-    belief = mean_belief.loc[common]
-
-    outlier_mask = ((shocks < MIN_SHOCKS) | (shocks > MAX_SHOCKS)) & (
-        belief < MIN_BELIEF
-    )
-    return outlier_mask[outlier_mask].index
 
 
 def impute_missing(df, random_state=RANDOM_SEED):

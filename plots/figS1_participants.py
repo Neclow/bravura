@@ -7,7 +7,7 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from src._config import MAX_SHOCKS, MIN_BELIEF, MIN_SHOCKS
+from src._config import DEFAULT_DATA_DIR, MAX_SHOCKS, MIN_BELIEF, MIN_SHOCKS
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 
@@ -27,15 +27,17 @@ def plot_shock_vs_belief(cohort, belief_scale=1):
     belief_scale : int
         Multiplier for raw belief scores (Cohort B uses 2).
     """
-    suffix = f"_{cohort.split('_')[-1]}"
+    cohort_key = cohort.split("_")[-1]
+    suffix = f"_{cohort_key}"
+    cohort_dir = f"{DEFAULT_DATA_DIR}/{cohort}"
 
     aggro_performance = pd.read_excel(
-        f"data/{cohort}/{PERFORMANCE_FNAME}", index_col="Subject"
+        f"{cohort_dir}/{PERFORMANCE_FNAME}", index_col="Subject"
     )
     shock_cols_only = [c for c in aggro_performance.columns if c.startswith("shock")]
     total_shocks = aggro_performance[shock_cols_only].sum(axis=1)
 
-    opponent_beliefs = pd.read_excel(f"data/{cohort}/{BELIEF_FNAME}", index_col="ID")
+    opponent_beliefs = pd.read_excel(f"{cohort_dir}/{BELIEF_FNAME}", index_col="ID")
     if sorted(opponent_beliefs.columns) != ["opponent1", "opponent2"]:
         opponent_beliefs.rename(
             columns={k: k[4:] + k[0] for k in opponent_beliefs.columns}, inplace=True
@@ -50,9 +52,9 @@ def plot_shock_vs_belief(cohort, belief_scale=1):
     total_shocks = total_shocks.loc[common_subj]
     mean_belief = mean_belief.loc[common_subj]
 
-    outliers = ((total_shocks < MIN_SHOCKS) | (total_shocks > MAX_SHOCKS)) & (
-        mean_belief < MIN_BELIEF
-    )
+    with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
+        outlier_ids = [line.strip() for line in f if line.strip()]
+    outliers = total_shocks.index.isin(outlier_ids)
 
     with plt.style.context(DEFAULT_STYLE):
         g = sns.JointGrid(x=total_shocks, y=mean_belief, height=4)
@@ -124,10 +126,6 @@ def plot_shock_vs_belief(cohort, belief_scale=1):
         print(f"Saved {FIG2_DIR}/shock_vs_belief{suffix}.pdf/.png")
         plt.show()
 
-    with open(f"{FIG2_DIR}/outlier_stats.txt", "w", encoding="utf-8") as f:
-        f.write(f"Excluded: {outliers.sum()} / {len(aggro_performance)} participants\n")
-        f.write(f"Excluded subjects: {sorted(outliers[outliers].index.tolist())}\n")
-    print(f"Saved {FIG2_DIR}/outlier_stats.txt")
 
 
 if __name__ == "__main__":

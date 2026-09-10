@@ -47,18 +47,18 @@ fit_or_load <- function(name, out_dir, ..., overwrite = FALSE) {
   }
 }
 
-kfold_or_load <- function(fit, name, out_dir, K = 10, overwrite = FALSE) {
-  path <- file.path(out_dir, paste0(name, "_kfold.rds"))
-  if (file.exists(path) && !overwrite) {
-    cat("Loading cached kfold:", name, "\n")
-    readRDS(path)
-  } else {
-    cat("Computing kfold:", name, "\n")
-    kf <- kfold(fit, K = K)
-    saveRDS(kf, path)
-    kf
-  }
-}
+# kfold_or_load <- function(fit, name, out_dir, K = 10, overwrite = FALSE) {
+#   path <- file.path(out_dir, paste0(name, "_kfold.rds"))
+#   if (file.exists(path) && !overwrite) {
+#     cat("Loading cached kfold:", name, "\n")
+#     readRDS(path)
+#   } else {
+#     cat("Computing kfold:", name, "\n")
+#     kf <- kfold(fit, K = K)
+#     saveRDS(kf, path)
+#     kf
+#   }
+# }
 
 save_diagnostics <- function(
   best,

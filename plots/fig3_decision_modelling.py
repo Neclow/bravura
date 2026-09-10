@@ -5,7 +5,6 @@ import numpy as np
 import pandas as pd
 import seaborn as sns
 
-from scipy.io import loadmat
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import roc_auc_score, roc_curve
 from sklearn.utils import resample
@@ -28,9 +27,9 @@ def load_data(cohort):
     pred = pd.read_csv(f"{cohort_dir}/predictions.csv", header=None)
     actual_vba = pd.read_csv(f"{cohort_dir}/decisions.csv", header=None)
     ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
-    outliers = loadmat(f"{cohort_dir}/outliers.mat", squeeze_me=True)["outliers"]
+    with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
+        outliers = [line.strip() for line in f if line.strip()]
 
-    # Align indices (excluding outliers)
     pred.index = ids["subject"]
     actual_vba.index = ids["subject"]
     included = pred.index[~pred.index.isin(outliers)]
@@ -373,7 +372,8 @@ def plot_coef_distributions(cohort="a"):
     coefs = pd.read_csv(f"{cohort_dir}/coefficients.csv", index_col="Row")
 
     ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
-    outliers = loadmat(f"{cohort_dir}/outliers.mat", squeeze_me=True)["outliers"]
+    with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
+        outliers = [line.strip() for line in f if line.strip()]
     included = ids["subject"][~ids["subject"].isin(outliers)]
     coefs = coefs.loc[included]
 
