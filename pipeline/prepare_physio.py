@@ -3,8 +3,7 @@
 Phase 1: Baseline HR:
     Resting HR per subject with cluster labels → baseline_hr.csv.
 Phase 2: Delta HR:
-    Change-from-baseline HR in long format → delta_hr_long.csv,
-    delta_hr_long_b.csv.
+    Change-from-baseline HR in long format → delta_hr_long.csv.
 Phase 3: Cardiac multivariate:
     Delta HR + varimax-rotated HRV RC1-3 → physio_cardiac_long.csv.
 """
@@ -64,8 +63,8 @@ TASK_BLOCK_LABELS = ["1.1", "1.2", "2.1", "2.2"]
 def load_physio(cohort):
     """Load physiology + behavioural cluster labels for one cohort.
 
-    Cohort A: subjects with complete HR + HRV across all blocks (N=112).
-    Cohort B: subjects with complete HR across all blocks (N=37).
+    Keeps subjects with complete data across all available cardiac columns
+    (HR + any HRV features present in the spreadsheet).
 
     Parameters
     ----------
@@ -87,17 +86,13 @@ def load_physio(cohort):
 
     shared = behav.index.intersection(physio.index)
 
-    if cohort == "a":
-        cardiac_cols = [f"HR_{b}" for b in ALL_BLOCKS] + [
-            f"{f}_{b}"
-            for f in HRV_FEATS
-            for b in ALL_BLOCKS
-            if f"{f}_{b}" in physio.columns
-        ]
-        keep = physio.loc[shared, cardiac_cols].dropna().index
-    else:
-        hr_cols = [f"HR_{b}" for b in ALL_BLOCKS]
-        keep = physio.loc[shared, hr_cols].dropna().index
+    cardiac_cols = [f"HR_{b}" for b in ALL_BLOCKS] + [
+        f"{f}_{b}"
+        for f in HRV_FEATS
+        for b in ALL_BLOCKS
+        if f"{f}_{b}" in physio.columns
+    ]
+    keep = physio.loc[shared, cardiac_cols].dropna().index
 
     labels = behav.loc[keep, "label"]
 
@@ -204,8 +199,7 @@ def export_delta_hr(physio, labels, cohort, out_dir):
     )
     long["block"] = long["block"].map(dict(zip(task_hr, TASK_BLOCK_LABELS)))
 
-    suffix = "" if cohort == "a" else f"_{cohort}"
-    path = f"{out_dir}/delta_hr_long{suffix}.csv"
+    path = f"{out_dir}/delta_hr_long.csv"
     long.to_csv(path, index=False)
     print(f"Saved {len(long)} rows to {path}")
 
@@ -256,6 +250,12 @@ def export_cardiac(physio, labels, out_dir):
     path = f"{out_dir}/physio_cardiac_long.csv"
     df.to_csv(path, index=False)
     print(f"Saved {df.shape} to {path}")
+
+    rc_labels = ["RC1 (power)", "RC2 (vagal)", "RC3 (entropy)"]
+    df_loadings = pd.DataFrame(rotated, index=available, columns=rc_labels)
+    loadings_path = f"{out_dir}/hrv_pca_loadings.csv"
+    df_loadings.to_csv(loadings_path, index_label="feature")
+    print(f"Saved loadings to {loadings_path}")
 
     rc_names = ["Overall HRV power", "Vagal/parasympathetic", "Complexity/entropy"]
     for i in range(3):
