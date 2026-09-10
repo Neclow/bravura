@@ -11,6 +11,7 @@ import numpy as np
 import pandas as pd
 
 from scipy.io import savemat
+from scipy.stats import pearsonr
 
 from src._config import (
     DEFAULT_DATA_DIR,
@@ -27,8 +28,8 @@ COHORTS = {
 }
 
 
-def detect_outliers(cohort):
-    """Identify outlier participants based on shock and belief thresholds.
+def load_data(cohort):
+    """Load aggro performance and belief data for a cohort.
 
     Parameters
     ----------
@@ -37,8 +38,10 @@ def detect_outliers(cohort):
 
     Returns
     -------
-    pd.Index
-        Subject IDs flagged as outliers.
+    total_shocks : pd.Series
+        Total shocks per subject.
+    mean_belief : pd.Series
+        Mean opponent belief per subject (may contain NaN).
     """
     cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
 
@@ -57,16 +60,29 @@ def detect_outliers(cohort):
     total_shocks = aggro[shock_cols].sum(axis=1)
     mean_belief = beliefs.mean(axis=1)
 
-    common = total_shocks.index.intersection(mean_belief.dropna().index)
-    shocks = total_shocks.loc[common]
-    belief = mean_belief.loc[common]
-
-    mask = ((shocks < MIN_SHOCKS) | (shocks > MAX_SHOCKS)) & (belief < MIN_BELIEF)
-    return mask[mask].index
+    return total_shocks, mean_belief
 
 
-def load_outliers(cohort):
-    """Read saved outlier IDs for a cohort.
+def corr_belief_ipq(mean_belief):
+    """Log Pearson correlation between mean belief and IPQ presence scores.
+
+    Parameters
+    ----------
+    mean_belief : pd.Series
+        Mean opponent belief per subject (from beliefs.xlsx).
+    """
+    additional = pd.read_excel(
+        f"{DEFAULT_DATA_DIR}/raw/additional.xlsx", index_col="Subject"
+    )
+    ipq = additional["PRES_SUM"]
+    belief = mean_belief.reindex(ipq.index)
+    mask = belief.notna() & ipq.notna()
+    r, p = pearsonr(belief[mask], ipq[mask])
+    print(f"Belief-IPQ correlation: r={r:.2f}, p={p:.3f}, N={mask.sum()}")
+
+
+def detect_outliers(cohort):
+    """Identify outlier participants based on shock and belief thresholds.
 
     Parameters
     ----------
@@ -75,16 +91,26 @@ def load_outliers(cohort):
 
     Returns
     -------
-    list[str]
-        Subject IDs to exclude.
+    pd.Index
+        Subject IDs flagged as outliers.
     """
-    path = f"{DEFAULT_DATA_DIR}/cohort_{cohort}/outliers.txt"
-    with open(path, encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
+    total_shocks, mean_belief = load_data(cohort)
+
+    common = total_shocks.index.intersection(mean_belief.dropna().index)
+    shocks = total_shocks.loc[common]
+    belief = mean_belief.loc[common]
+
+    mask = ((shocks < MIN_SHOCKS) | (shocks > MAX_SHOCKS)) & (belief < MIN_BELIEF)
+    return mask[mask].index
 
 
 if __name__ == "__main__":
     for cohort in COHORTS:
+        total_shocks, mean_belief = load_data(cohort)
+
+        if cohort == "a":
+            corr_belief_ipq(mean_belief)
+
         outlier_ids = detect_outliers(cohort)
         out_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
         os.makedirs(out_dir, exist_ok=True)
