@@ -30,7 +30,6 @@ questionnaire data.
 | `collect_metrics()` | Merge VBA fit metrics with per-subject AUC and Brier score |
 | `load_behavioral_features()` | Build combined feature DataFrame from VBA coefficients, fit metrics, shock data, and beliefs |
 | `sample_behavioral_features()` | Generator yielding MC samples by resampling VBA posterior coefficients from multivariate normals |
-| `detect_outliers()` | Identify subjects with extreme shock counts AND low belief scores |
 | `impute_missing()` | Fill `first_shock` NaN with 30; IterativeImputer (BayesianRidge) for belief columns |
 
 ### `src/cluster2.py`
@@ -85,7 +84,7 @@ Shared helpers for brms scripts. See [5_brms.md](5_brms.md) for usage.
 | ---- | ----------- |
 | `g_Aggression_short.m` | Observation function: sigmoid P(shock) from 4 parameters |
 | `modelFit_short.m` | Fit VBA model for all subjects given prior means and SDs |
-| `export.m` | Export BMA results to CSV and `.mat` for Python |
+| `utils.m` | Shared directory paths for a cohort (`paths = utils(cohort)`) |
 
 ### `src/physio/`
 
