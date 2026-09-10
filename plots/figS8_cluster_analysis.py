@@ -73,7 +73,7 @@ def plot_silhouette_k(sens_k):
 def plot_gap_statistic(sens_k):
     """Plot gap statistic difference vs number of clusters."""
     with plt.style.context(DEFAULT_STYLE):
-        fig, ax = plt.subplots(figsize=(3.5, 2.5))
+        fig, ax = plt.subplots(figsize=(4, 3))
         ax.plot(sens_k.index, sens_k["gap_diff"], marker="o", color="k")
         ax.axhline(0, ls="--", color="grey", lw=0.8)
         ax.axvline(K_BEST, ls="--", color="grey", lw=0.8)

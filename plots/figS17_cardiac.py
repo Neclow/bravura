@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-from src._config import DEFAULT_BRMS_DIR
+from src._config import DEFAULT_BRMS_DIR, DEFAULT_PHYSIO_DIR_A
 
 from ._config import DEFAULT_IMG_DIR, DEFAULT_STYLE
 
@@ -15,6 +15,8 @@ DV_ORDER = ["HR", "HRV_RC1", "HRV_RC2", "HRV_RC3"]
 DV_TITLES = ["HR", "HRV RC1\n(power)", "HRV RC2\n(vagal)", "HRV RC3\n(entropy)"]
 
 FOCUS_BLOCK = "1.1"
+LOADINGS_PATH = f"{DEFAULT_PHYSIO_DIR_A}/hrv_pca_loadings.csv"
+RC_LABELS = ["RC1 (power)", "RC2 (vagal)", "RC3 (entropy)"]
 
 
 def short_contrast(c):
@@ -73,7 +75,7 @@ def plot_cardiac_contrasts(block11):
 
         fig.suptitle("Block 1.1 pairwise contrasts (95% CrI)", y=0.96, fontsize=11)
         fig.tight_layout()
-        stem = f"{FIG_DIR}/figS17_cardiac_contrasts"
+        stem = f"{FIG_DIR}/figS17a_cardiac_contrasts"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -84,6 +86,46 @@ def plot_cardiac_contrasts(block11):
     print(f"Saved {table_path}")
 
 
+def load_loadings():
+    """Load varimax-rotated PCA loadings for HRV features.
+
+    Returns
+    -------
+    df_loadings : DataFrame
+        Features (index) x RC components (columns).
+    """
+    return pd.read_csv(LOADINGS_PATH, index_col="feature")
+
+
+def plot_hrv_loadings(df_loadings):
+    """Plot varimax-rotated PCA loadings for HRV RC1-3 (Supp. Fig. 17b)."""
+    with plt.style.context(DEFAULT_STYLE):
+        fig, axes = plt.subplots(1, 3, figsize=(7, 3.5), sharex=True)
+
+        for rc, ax in zip(RC_LABELS, axes):
+            sorted_vals = df_loadings[rc].sort_values()
+            colors = ["#c44e52" if v < 0 else "#4c72b0" for v in sorted_vals]
+            y = np.arange(len(sorted_vals))
+            ax.barh(y, sorted_vals.values, color=colors)
+            ax.set_yticks(y)
+            ax.set_yticklabels(sorted_vals.index)
+            ax.set_xlabel("Loading")
+            ax.set_title(rc)
+            ax.set_axisbelow(True)
+            ax.grid(alpha=0.3, axis="x")
+            ax.set_xticks(np.arange(-1, 1.1, 0.5))
+
+        fig.tight_layout()
+        stem = f"{FIG_DIR}/figS17b_hrv_pca_loadings"
+        fig.savefig(f"{stem}.pdf", bbox_inches="tight")
+        fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
+        print(f"Saved {stem}.pdf/.png")
+        plt.show()
+
+
 if __name__ == "__main__":
     block11 = load_data()
     plot_cardiac_contrasts(block11)
+
+    df_loadings = load_loadings()
+    plot_hrv_loadings(df_loadings)

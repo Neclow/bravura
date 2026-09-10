@@ -77,7 +77,7 @@ def load_delta1_data():
 
 
 def load_hr_timecourse_data():
-    """Load raw HR data and compute per-cluster time course stats for Fig. S7.
+    """Load raw HR data and compute per-cluster time course stats for Fig. S14.
 
     Returns
     -------
@@ -186,7 +186,7 @@ def plot_delta_hr(posterior, bf):
         print(f"Saved {stem}.pdf/.png")
         plt.show()
 
-    table_path = f"{FIG4_DIR}/tableS7_delta_hr.md"
+    table_path = f"{FIG4_DIR}/tableS9_delta_hr.md"
     bf.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 
@@ -250,7 +250,7 @@ def plot_delta1_cohorts(delta1):
 
 
 def plot_hr_timecourse(hr_stats, grand_stats):
-    """Plot HR time course per cluster with grand mean (Fig. S7)."""
+    """Plot HR time course per cluster with grand mean (Fig. S14)."""
     markers = ["o", "s", "D"]
     linestyles = ["-", "--", ":"]
 
@@ -302,7 +302,7 @@ def plot_hr_timecourse(hr_stats, grand_stats):
         ax.legend(title="", frameon=False, ncol=4, columnspacing=0.5)
 
         fig.tight_layout()
-        stem = f"{FIG4_DIR}/figS7_hr_timecourse"
+        stem = f"{FIG4_DIR}/figS14a_hr_timecourse"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -310,7 +310,7 @@ def plot_hr_timecourse(hr_stats, grand_stats):
 
 
 def plot_delta_hr_heatmap(physio_hr, labels):
-    """Plot per-subject delta-HR heatmap grouped by cluster (Fig. S7b)."""
+    """Plot per-subject delta-HR heatmap grouped by cluster (Fig. S14b)."""
     clusters = labels.map(CLUSTER_NAMES)
 
     delta_wide = physio_hr[HR_COLS[1:]].sub(physio_hr["HR_Pre"], axis=0)
@@ -357,7 +357,7 @@ def plot_delta_hr_heatmap(physio_hr, labels):
             label.set_fontweight("bold")
 
         fig.tight_layout()
-        stem = f"{FIG4_DIR}/figS7b_delta_hr_heatmap"
+        stem = f"{FIG4_DIR}/figS14b_delta_hr_heatmap"
         fig.savefig(f"{stem}.pdf", bbox_inches="tight")
         fig.savefig(f"{stem}.png", dpi=300, bbox_inches="tight")
         print(f"Saved {stem}.pdf/.png")
@@ -373,7 +373,7 @@ if __name__ == "__main__":
     delta1 = load_delta1_data()
     plot_delta1_cohorts(delta1)
 
-    # Fig S7
+    # Fig S14
     hr_stats, grand_stats, physio_hr, labels = load_hr_timecourse_data()
     plot_hr_timecourse(hr_stats, grand_stats)
     plot_delta_hr_heatmap(physio_hr, labels)
