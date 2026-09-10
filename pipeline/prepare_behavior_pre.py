@@ -5,6 +5,8 @@ Saves to data_v2/cohort_{cohort}/:
     outliers.txt    One subject ID per line
 """
 
+import os
+
 import numpy as np
 import pandas as pd
 
@@ -44,9 +46,7 @@ def detect_outliers(cohort):
     beliefs = pd.read_excel(f"{cohort_dir}/beliefs.xlsx", index_col="ID")
 
     if sorted(beliefs.columns) != ["opponent1", "opponent2"]:
-        beliefs.rename(
-            columns={k: k[4:] + k[0] for k in beliefs.columns}, inplace=True
-        )
+        beliefs.rename(columns={k: k[4:] + k[0] for k in beliefs.columns}, inplace=True)
     beliefs.drop("opponent3", axis=1, errors="ignore", inplace=True)
 
     scale = COHORTS[cohort]["belief_scale"]
@@ -87,6 +87,7 @@ if __name__ == "__main__":
     for cohort in COHORTS:
         outlier_ids = detect_outliers(cohort)
         out_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
+        os.makedirs(out_dir, exist_ok=True)
 
         savemat(
             f"{out_dir}/outliers.mat",
