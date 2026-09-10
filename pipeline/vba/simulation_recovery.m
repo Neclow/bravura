@@ -14,7 +14,7 @@ function [cov_stats, corr_preds] = data_simulation(cohort, nSim)
 % cohort : char
 %     'a' or 'b'.
 % nSim : int, optional
-%     Number of simulations per subject (default: 10).
+%     Number of simulations per subject (default: 30).
 
 if nargin < 2
     nSim = 30;
