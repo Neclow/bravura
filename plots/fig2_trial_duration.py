@@ -101,25 +101,6 @@ def plot_trial_duration(cohort):
     bf_duration.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
 
-    with open(f"{stem}_stats.txt", "w", encoding="utf-8") as f:
-        bf_row = bf_duration.query(
-            f"cohort == '{cohort}' & contrast == 'Enlarge - Shock'"
-        ).iloc[0]
-        f.write(
-            f"Difference: {-bf_row['estimate']:.2f} s "
-            f"[{-bf_row['Q97.5']:.2f}, {-bf_row['Q2.5']:.2f}]\n"
-        )
-
-        wide = dur_post.pivot_table(
-            index=".draw", columns="decision", values="duration"
-        )
-        pct = (wide["Shock"] - wide["Enlarge"]) / wide["Enlarge"] * 100
-        f.write(
-            f"Relative: {pct.mean():.1f}% "
-            f"[{pct.quantile(0.025):.1f}%, {pct.quantile(0.975):.1f}%]\n"
-        )
-    print(f"Saved {stem}_stats.txt")
-
 
 if __name__ == "__main__":
     plot_trial_duration("A")

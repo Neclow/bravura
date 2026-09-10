@@ -1,7 +1,6 @@
 import os
 
 import matplotlib.pyplot as plt
-import numpy as np
 import pandas as pd
 import seaborn as sns
 
@@ -86,28 +85,6 @@ def plot_shocks_given(cohort):
     table_path = f"{FIG2_DIR}/tableS4_shocks_given.md"
     bf_shocks.set_index("contrast").round(3).to_markdown(table_path)
     print(f"Saved {table_path}")
-
-    with open(f"{stem}_stats.txt", "w", encoding="utf-8") as f:
-        # Opponent effect: absolute difference (count scale)
-        wide = shock_post.pivot_table(
-            index=".draw", columns="opponent", values="shocks"
-        )
-        diff = wide["Opponent 2"] - wide["Opponent 1"]
-        f.write(
-            f"Difference: {diff.mean():.1f} [{diff.quantile(0.025):.1f}, {diff.quantile(0.975):.1f}]"
-        )
-        f.write("\n")
-
-        # Opponent effect: odds ratio
-        log_or = -bf_shocks.query("cohort == 'A'")["estimate"].values[
-            0
-        ]  # flip sign for Opp2/Opp1
-        or_val = np.exp(log_or)
-        or_lo = np.exp(-bf_shocks.query("cohort == 'A'")["Q97.5"].values[0])
-        or_hi = np.exp(-bf_shocks.query("cohort == 'A'")["Q2.5"].values[0])
-        f.write(f"OR (Opp2/Opp1): {or_val:.2f} [{or_lo:.2f}, {or_hi:.2f}]")
-        f.write("\n")
-    print(f"Saved {stem}_stats.txt")
 
 
 if __name__ == "__main__":
