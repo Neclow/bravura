@@ -56,8 +56,8 @@ downstream analyses.
 Sweeps k in [2, 10] across four solvers (k-means, k-medoids, GMM, HAC).
 Picks best solver by highest mean silhouette, optimal k by first gap_diff > 0.
 
-- **Outputs:** `data_v2/processed/sensitivity/grid_k_solver.csv`,
-  `best_solver_ablate_k.csv`
+- **Outputs:** `data_v2/cohort_a/clustering/grid_k_solver.csv`,
+  `ablate_k.csv`
 
 ## Phase 2: Consensus clustering
 
@@ -72,9 +72,9 @@ PCA (2 components) is fit on Cohort A and applied to both cohorts for
 visualisation.
 
 - **Outputs:**
-  - `data_v2/processed/behav_Xa.csv`: Cohort A features + cluster labels + PCA
-  - `data_v2/processed/behav_Xb.csv`: Cohort B features + cluster labels + PCA
-  - `data_v2/processed/mc_consensus_k-means_3.npz`: MC label counts and stability
+  - `data_v2/cohort_a/clustering/clusters.csv`: Cohort A features + cluster labels + PCA
+  - `data_v2/cohort_b/clustering/clusters.csv`: Cohort B features + cluster labels + PCA
+  - `data_v2/cohort_a/clustering/mc_k-means_3.npz`: MC label counts and stability
 
 ## Phase 3: Metric ablation
 
@@ -82,5 +82,4 @@ Tests which VBA fit metric (R2, Brier, AUC, etc.) to include as a clustering
 feature. Starts with the base 7 features (no metric), adds one metric at a
 time, compares silhouette scores.
 
-- **Outputs:** `data_v2/processed/sensitivity/ablate_metric.csv`,
-  `ari_metric.csv`
+- **Outputs:** `data_v2/cohort_a/clustering/ablate_metric.csv`

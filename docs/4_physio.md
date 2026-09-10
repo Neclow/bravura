@@ -5,7 +5,7 @@ Computes physiological features and exports long-format CSVs for brms models
 
 - **Command:** `pixi run prepare_physio`
 - **Script:** `pipeline/prepare_physio.py`
-- **Requires:** `behav_Xa.csv`, `behav_Xb.csv` from clustering
+- **Requires:** `clusters.csv` from clustering
   ([2_clustering.md](2_clustering.md)); raw physiology data.
 
 ## Exclusions
@@ -28,7 +28,7 @@ incomplete HR (N=37 retained).
 
 Resting HR per subject with cluster labels.
 
-- **Outputs:** `data_v2/processed/baseline_hr.csv`
+- **Outputs:** `data_v2/cohort_a/physio/baseline_hr.csv`
 - **Columns:** `subject`, `HR_Pre`, `Cluster`
 - **Consumed by:** `brms_baseline_hr`
 - **Note:** Cohort A only.
@@ -37,10 +37,10 @@ Resting HR per subject with cluster labels.
 
 Change-from-baseline HR for each task block.
 
-- **Outputs:** `data_v2/processed/delta_hr_long.csv` (Cohort A),
-  `delta_hr_long_b.csv` (Cohort B)
+- **Outputs:** `data_v2/cohort_a/physio/delta_hr_long.csv` (Cohort A),
+  `data_v2/cohort_b/physio/delta_hr_long.csv` (Cohort B)
 - **Columns:** `subject`, `Cluster`, `block`, `delta_hr`
-- **Consumed by:** `brms_delta_hr`, `brms_delta_hr_rep`
+- **Consumed by:** `brms_delta_hr`, `brms_delta_hr_joint`
 
 ## Phase 3: Cardiac multivariate
 
@@ -55,7 +55,7 @@ fit on 17 HRV features pooled across blocks, then varimax-rotated:
 
 Delta scores are computed as task-block minus Pre for each component.
 
-- **Outputs:** `data_v2/processed/physio_cardiac_long.csv`
+- **Outputs:** `data_v2/cohort_a/physio/physio_cardiac_long.csv`
 - **Columns:** `subject`, `Cluster`, `block`, `HR`, `HRV_RC1`, `HRV_RC2`, `HRV_RC3`
 - **Consumed by:** `brms_physio_cardiac`
 - **Note:** Cohort A only.

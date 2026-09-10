@@ -14,7 +14,11 @@ outlier thresholds, and cluster definitions.
 | -------- | ----- |
 | `DEFAULT_DATA_DIR` | `"data_v2"` |
 | `DEFAULT_BRMS_DIR` | `"data_v2/brms"` |
-| `DEFAULT_PROCESSED_DIR` | `"data_v2/processed"` |
+| `DEFAULT_CLUSTER_DIR_A` | `"data_v2/cohort_a/clustering"` |
+| `DEFAULT_CLUSTER_DIR_B` | `"data_v2/cohort_b/clustering"` |
+| `DEFAULT_PHYSIO_DIR_A` | `"data_v2/cohort_a/physio"` |
+| `DEFAULT_PHYSIO_DIR_B` | `"data_v2/cohort_b/physio"` |
+| `DEFAULT_SHARED_DIR` | `"data_v2/shared"` |
 | `RANDOM_SEED` | 42 |
 | `DEFAULT_CLUSTERING_FEATURES` | Kp, Kr1, Krc, Kwc, R2, shock_opp1, shock_opp2, first_shock |
 | `CLUSTER_NAMES` | {0: Reactive, 1: Non-aggressive, 2: Proactive} |
@@ -70,7 +74,6 @@ Shared helpers for brms scripts. See [5_brms.md](5_brms.md) for usage.
 | Function | Description |
 | -------- | ----------- |
 | `fit_or_load()` | Cache-aware `brm()` wrapper (saves/loads `.rds`) |
-| `kfold_or_load()` | Cache-aware K-fold cross-validation |
 | `save_diagnostics()` | Write summary, predictive checks, trace plots |
 | `contrasts_eti()` | Equal-tailed 95% CrIs for emmeans contrasts |
 | `bf_table()` | Contrast table with CrIs and Savage-Dickey BFs |

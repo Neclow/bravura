@@ -36,15 +36,15 @@ See the [data README](../data_v2/README.md#brms) for the full output listing.
 | Command | Script | Input | Formula | Family |
 | ------- | ------ | ----- | ------- | ------ |
 | `pixi run brms_shocks` | `shocks.R` | `shock_long.csv` | `shocks \| trials(15) ~ Cluster * opponent + (1 \| subject)` | binomial |
-| `pixi run brms_shocks_overview` | `shocks_overview.R` | `behav_Xa/Xb.csv` | `shocks \| trials(15) ~ opponent * cohort + (1 \| subject)` | binomial |
+| `pixi run brms_shocks_overview` | `shocks_overview.R` | `clusters.csv` | `shocks \| trials(15) ~ opponent * cohort + (1 \| subject)` | binomial |
 | `pixi run brms_psap` | `psap.R` | `psap_ilr.csv` | `cbind(Earn, Steal, Protect) ~ Cluster * phase + (1 \|p\| Subject)` | dirichlet |
 | `pixi run brms_baseline_hr` | `baseline_hr.R` | `baseline_hr.csv` | `HR_Pre ~ Cluster` | student |
-| `pixi run brms_beliefs_overview` | `beliefs_overview.R` | `behav_Xa/Xb.csv` | `belief ~ opponent * cohort + (1 \| subject)` | student |
+| `pixi run brms_beliefs_overview` | `beliefs_overview.R` | `clusters.csv` | `belief ~ opponent * cohort + (1 \| subject)` | student |
 | `pixi run brms_delta_hr` | `delta_hr.R` | `delta_hr_long.csv` | `delta_hr ~ Cluster * block + (1 \| subject)` | student |
-| `pixi run brms_delta_hr_rep` | `delta_hr_replication.R` | `delta_hr_long.csv`, `delta_hr_long_b.csv` | N/A (BayesRep) | N/A |
+| `pixi run brms_delta_hr_joint` | `delta_hr_joint.R` | `delta_hr_long.csv` (both cohorts) | `delta_hr ~ Cluster * cohort` (per block) | student |
 | `pixi run brms_latency` | `latency.R` | `shock_latency_long.csv` | `latency ~ Cluster * opponent + (1 \| subject)` | lognormal |
 | `pixi run brms_physio_cardiac` | `physio_cardiac.R` | `physio_cardiac_long.csv` | `mvbind(HR, HRV_RC1, HRV_RC2, HRV_RC3) ~ Cluster * block + (1 \|p\| subject)` | student |
-| `pixi run brms_trial_duration` | `trial_duration.R` | `trial_events.csv` | `duration ~ decision * cohort + (1 \| subject)` | student |
+| `pixi run brms_trial_duration_overview` | `trial_duration_overview.R` | `trial_events.csv` | `duration ~ decision * cohort + (1 \| subject)` | student |
 All outputs are written to `data_v2/brms/{model_name}/`.
 
 ## Model details
@@ -62,12 +62,12 @@ to outliers). Uses 8000 iterations / 4000 warmup with `adapt_delta = 0.99`,
 `max_treedepth = 15`. Cluster levels: Non-aggressive, Proactive, Reactive;
 block levels: 1.1, 1.2, 2.1, 2.2.
 
-### delta_hr_replication.R
+### delta_hr_joint.R
 
-Not a brms model. Uses the BayesRep package (Pawel & Held, 2022) to compute
-replication Bayes factors (BFr) and sceptical Bayes factors (BFs) from
-Cohort A and B effect sizes. Focuses on blocks 1.1 and 2.1 where Cohort A
-showed strong effects. BFr < 1 = replication success.
+Joint replication model. Fits one Student-t model per block (1.1 and 2.1)
+with both cohorts combined: `delta_hr ~ Cluster * cohort`. The
+Cluster:cohort interaction tests whether cluster effects differ between
+cohorts. A null interaction = consistent pattern = replication support.
 
 ### physio_cardiac.R
 
@@ -81,7 +81,7 @@ Dirichlet regression on three-part compositions (Earn, Steal, Protect).
 Contrasts computed via `pairwise_bf()`, conditioned on phase and button type.
 Uses 95% CrIs (not BFs) for contrasts.
 
-### trial_duration.R
+### trial_duration_overview.R
 
 Both cohorts combined. Removes extreme durations (>30s). Decisions coded as
 Shock, Enlarge, or Nothing. Uses 16000 iterations / 8000 warmup with
