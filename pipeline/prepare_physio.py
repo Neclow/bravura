@@ -25,7 +25,6 @@ from src._config import (
 )
 
 # Feature sets
-
 HRV_FEATS = [
     "SDNN",
     "RMSSD",
@@ -45,15 +44,14 @@ HRV_FEATS = [
     "TINN",
     "TRI",
 ]
-# Block structure
 
+# Block structure
 ALL_BLOCKS = ["Pre", "Op1T1", "Op1T2", "Op2T1", "Op2T2"]
 TASK_BLOCKS = ["Op1T1", "Op1T2", "Op2T1", "Op2T2"]
 TASK_BLOCK_LABELS = ["1.1", "1.2", "2.1", "2.2"]
 
+
 # Data loading
-
-
 def load_physio(cohort):
     """Load physiology + behavioural cluster labels for one cohort.
 
@@ -104,8 +102,6 @@ def load_physio(cohort):
 
 
 # Helpers
-
-
 def varimax(Phi, max_iter=100, tol=1e-6):
     """Varimax rotation on a loadings matrix (n_features x n_components)."""
     p, k = Phi.shape
@@ -168,8 +164,6 @@ def _block_delta_scores(physio, feats, blk, scaler, pca, pre_scores):
 
 
 # Phase 1: Baseline HR
-
-
 def export_baseline_hr(physio, labels, out_dir):
     """Export resting HR per subject with cluster labels."""
     df = pd.DataFrame(
@@ -187,8 +181,6 @@ def export_baseline_hr(physio, labels, out_dir):
 
 
 # Phase 2: Delta HR
-
-
 def export_delta_hr(physio, labels, cohort, out_dir):
     """Export delta-HR (change from Pre) in long format for one cohort."""
     task_hr = [f"HR_{b}" for b in TASK_BLOCKS]
@@ -211,8 +203,6 @@ def export_delta_hr(physio, labels, cohort, out_dir):
 
 
 # Phase 3: Cardiac multivariate
-
-
 def export_cardiac(physio, labels, out_dir):
     """Export delta HR + varimax-rotated HRV RC1-3 in long format."""
     available = _available_feats(physio, HRV_FEATS)
@@ -268,7 +258,6 @@ def export_cardiac(physio, labels, out_dir):
 
 
 # Main
-
 if __name__ == "__main__":
     os.makedirs(DEFAULT_PROCESSED_DIR, exist_ok=True)
     out = DEFAULT_PROCESSED_DIR
@@ -287,4 +276,3 @@ if __name__ == "__main__":
 
     print("=== Phase 3: Cardiac (HR + varimax HRV RC1-3) ===")
     export_cardiac(physio_a, labels_a, out)
-
