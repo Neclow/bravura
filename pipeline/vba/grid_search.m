@@ -12,10 +12,7 @@ function grid_search(cohort)
 
 addpath('src/vba');
 
-data_dir = fullfile('data', ['cohort_' cohort]);
-file = fullfile(data_dir, 'vba_input.xlsx');
-out_dir = fullfile(data_dir, 'vba_models');
-mkdir(out_dir);
+paths = utils(cohort);
 
 means = [0, 0, 0, 0];
 deviations = [1, 2, 4, 8];
@@ -26,9 +23,9 @@ n_grid = size(deviations_grid, 1);
 
 for i = 1:n_grid
     fprintf('===== Model %d/%d =====\n', i, n_grid);
-    modelFit_short(file, means, deviations_grid(i, :), out_dir);
+    modelFit_short(paths.input_file, means, deviations_grid(i, :), paths.model_dir);
 end
 
-fprintf('Done. %d models saved to %s\n', n_grid, out_dir);
+fprintf('Done. %d models saved to %s\n', n_grid, paths.model_dir);
 
 end

@@ -10,14 +10,12 @@ function bma(cohort)
 % -------
 %     bma('a')
 
-data_dir = fullfile('data', ['cohort_' cohort]);
-model_dir = fullfile(data_dir, 'vba_models');
-out_dir = fullfile(data_dir, 'vba_bma');
-mkdir(out_dir);
+addpath('src/vba');
+paths = utils(cohort);
 
-files = dir(fullfile(model_dir, '*.mat'));
+files = dir(fullfile(paths.model_dir, '*.mat'));
 nFiles = length(files);
-fprintf('Found %d models in %s\n', nFiles, model_dir);
+fprintf('Found %d models in %s\n', nFiles, paths.model_dir);
 
 % Read subject count from first file
 tmp = load(fullfile(files(1).folder, files(1).name));
@@ -60,11 +58,11 @@ groupResult.subject = struct();
 groupResult.subject.posterior = P_BMA';
 summaryResult = [P_BMA.muPhi]';
 
-save(fullfile(out_dir, 'bma_results.mat'), 'groupResult', 'summaryResult');
+save(fullfile(paths.bma_dir, 'bma_results.mat'), 'groupResult', 'summaryResult');
 
 % Also save free energy matrix for reference
-save(fullfile(out_dir, 'free_energy.mat'), 'F');
+save(fullfile(paths.bma_dir, 'free_energy.mat'), 'F');
 
-fprintf('BMA complete. Results saved to %s\n', out_dir);
+fprintf('BMA complete. Results saved to %s\n', paths.bma_dir);
 
 end

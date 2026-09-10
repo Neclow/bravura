@@ -5,7 +5,7 @@ function [cov_stats, corr_preds] = data_simulation(cohort, nSim)
 % VBA_simulate, re-fit with VBA_NLStateSpaceModel, repeat nSim times.
 % Then compute the covariance and correlation of recovered estimates.
 %
-% Exports to data/cohort_{cohort}/:
+% Outputs:
 %   cov_stats.mat   determinant, condition_number] per subject
 %   corr_preds.mat  per-subject correlation matrix of recovered parameters
 %
@@ -20,11 +20,11 @@ if nargin < 2
     nSim = 30;
 end
 
-data_dir = fullfile('data', ['cohort_' cohort]);
+addpath('src/vba');
+paths = utils(cohort);
 
 %% Load data
-file = fullfile(data_dir, 'vba_input.xlsx');
-data = importdata(file);
+data = importdata(paths.input_file);
 factors = data.data(1:10, :);
 
 if strcmp(cohort, 'b')
@@ -112,9 +112,9 @@ for iSubject = 1:nSubject
 end
 
 %% Save
-save(fullfile(data_dir, 'cov_stats.mat'), 'cov_stats', 'subject_ids');
-save(fullfile(data_dir, 'corr_preds.mat'), 'corr_preds', 'cov_preds', 'subject_ids');
+save(fullfile(paths.vba_dir, 'cov_stats.mat'), 'cov_stats', 'subject_ids');
+save(fullfile(paths.vba_dir, 'corr_preds.mat'), 'corr_preds', 'cov_preds', 'subject_ids');
 
-fprintf('Simulation-recovery complete. Saved to %s\n', data_dir);
+fprintf('Simulation-recovery complete. Saved to %s\n', paths.vba_dir);
 
 end
