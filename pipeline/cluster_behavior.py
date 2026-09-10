@@ -3,11 +3,13 @@
 """Cluster participants based on behavioural data.
 
 Phase 1:  Grid search (deterministic, fast):
-    k × solver silhouette table.
-Phase 2: Consensus clustering (MC, ~2 min):
-    fuzzy_fit_predict with chosen k/solver → behav_Xa.csv, behav_Xb.csv.
-Phase 3: Metric ablation (deterministic):
-    Which VBA fit metric to include, given k=3 / k-means.
+    k × solver silhouette + gap statistic table.
+Phase 2: Fit_predict with chosen k and solver (deterministic):
+    Save behav_Xa.csv and behav_Xb.csv (with cluster labels).
+Phase 3: MC-based clustering:
+    fuzzy_fit_predict with chosen k and solver, save consensus robustness metrics.
+Phase 4: Metric ablation (deterministic):
+    fit_predict with various VBA metrics with chosen k and solver, save ablation table.
 """
 
 import os
@@ -24,6 +26,8 @@ from sklearn.preprocessing import StandardScaler
 
 from src._config import (
     CLUSTER_NAMES,
+    DEFAULT_CLUSTER_DIR_A,
+    DEFAULT_CLUSTER_DIR_B,
     DEFAULT_CLUSTERING_FEATURES,
     DEFAULT_DATA_DIR,
     MAX_BELIEF_COHORT_A,
@@ -37,10 +41,14 @@ from src.preprocessing import (
     sample_behavioral_features,
 )
 
+DEFAULT_COLS_TO_DROP = ["Brier", "AUC", "accuracy", "balanced_accuracy", "log_evidence"]
+K_RANGE = range(2, 11)
+METRIC_COLS = ["R2", "Brier", "AUC", "balanced_accuracy", "accuracy", "log_evidence"]
+N_SAMPLES = 1000
 
 
 def parse_args():
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser()
     parser.add_argument(
         "-kbest",
         default="auto",
@@ -68,12 +76,6 @@ def parse_args():
     return args
 
 
-N_SAMPLES = 1000
-DEFAULT_COLS_TO_DROP = ["Brier", "AUC", "accuracy", "balanced_accuracy", "log_evidence"]
-METRIC_COLS = ["R2", "Brier", "AUC", "balanced_accuracy", "accuracy", "log_evidence"]
-K_RANGE = range(2, 11)
-
-
 def load_data(cohort):
     """Load VBA outputs, questionnaires, and build behavioural features.
 
@@ -88,13 +90,14 @@ def load_data(cohort):
         Full feature set including all metrics.
     """
     cohort_dir = f"{DEFAULT_DATA_DIR}/cohort_{cohort}"
+    vba_dir = f"{cohort_dir}/vba"
 
     with open(f"{cohort_dir}/outliers.txt", encoding="utf-8") as f:
         outlier_ids = [line.strip() for line in f if line.strip()]
 
-    vba_metrics = pd.read_csv(f"{cohort_dir}/fit_metrics.csv", index_col=0)
-    vba_preds = pd.read_csv(f"{cohort_dir}/predictions.csv", header=None)
-    vba_actual = pd.read_csv(f"{cohort_dir}/decisions.csv", header=None)
+    vba_metrics = pd.read_csv(f"{vba_dir}/fit_metrics.csv", index_col=0)
+    vba_preds = pd.read_csv(f"{vba_dir}/predictions.csv", header=None)
+    vba_actual = pd.read_csv(f"{vba_dir}/decisions.csv", header=None)
 
     ids = pd.read_csv(f"{cohort_dir}/subject_ids.csv")
     vba_preds.index = ids["subject"]
@@ -102,7 +105,7 @@ def load_data(cohort):
 
     all_metrics = collect_metrics(vba_metrics, vba_preds, vba_actual)
 
-    vba_posteriors = loadmat(f"{cohort_dir}/vba_posteriors.mat")
+    vba_posteriors = loadmat(f"{vba_dir}/vba_posteriors.mat")
     coefs_mu = vba_posteriors["mu_all"]
     coefs_sigma = vba_posteriors["sigma_all"]
 
@@ -134,7 +137,7 @@ def load_data(cohort):
         cols_to_use=DEFAULT_CLUSTERING_FEATURES,
     )
 
-    coefs = pd.read_csv(f"{cohort_dir}/coefficients.csv", index_col=0)
+    coefs = pd.read_csv(f"{vba_dir}/coefficients.csv", index_col=0)
     coefs = coefs.drop(index=outlier_ids, errors="ignore")
     bma = load_behavioral_features(coefs, all_metrics, aggro, beliefs)
 
@@ -146,7 +149,6 @@ def grid_search(Xa_scaled, out_dir):
     solvers = list(CLUSTERERS.keys())
 
     # 1a: silhouette pivot across all solvers
-    print("=== k × solver silhouette ===")
     rows = []
     for solver in solvers:
         sens_k = ablate_k(
@@ -180,18 +182,82 @@ def grid_search(Xa_scaled, out_dir):
     print()
 
     best = grid[grid["solver"] == best_solver].set_index("k")
-    print(f"=== {best_solver}: silhouette + gap ===")
+    print(f"Best solver: {best_solver}")
     print(best[["silhouette", "gap", "gap_diff"]].round(3).to_markdown())
-    best_path = f"{out_dir}/best_solver_ablate_k.csv"
+    best_path = f"{out_dir}/ablate_k.csv"
     best[["silhouette", "gap", "gap_diff"]].round(3).to_csv(best_path)
     print(f"Saved: {best_path}")
 
     positive = best["gap_diff"].dropna()
     positive = positive[positive > 0]
     optimal_k = positive.index.min() if len(positive) > 0 else None
-    print(f"\nOptimal k (first gap_diff > 0): {optimal_k}")
+    print(f"\nOptimal k (first gap_diff > 0): {optimal_k}\n")
 
     return best_solver, optimal_k
+
+
+def cluster_and_save(Xa, Xb, Xa_scaled, Xb_scaled, k, solver):
+    """Phase 2: fit_predict with chosen k and solver, save cluster assignments."""
+    resa = fit_predict(X=Xa_scaled, solver=solver, k=k, random_state=RANDOM_SEED)
+    resb_labels = resa.clusterer.predict(Xb_scaled)
+
+    Xa["label"] = resa.labels
+    Xa["Cluster"] = Xa["label"].map(CLUSTER_NAMES)
+    Xb["label"] = resb_labels
+    Xb["Cluster"] = Xb["label"].map(CLUSTER_NAMES)
+
+    pca = PCA(n_components=2, random_state=RANDOM_SEED)
+    Xa[["PC1", "PC2"]] = pca.fit_transform(Xa_scaled)
+    Xb[["PC1", "PC2"]] = pca.transform(Xb_scaled)
+
+    out_a = f"{DEFAULT_CLUSTER_DIR_A}/clusters.csv"
+    out_b = f"{DEFAULT_CLUSTER_DIR_B}/clusters.csv"
+    Xa.to_csv(out_a)
+    print(f"Saved: {out_a}")
+    Xb.to_csv(out_b)
+    print(f"Saved: {out_b}\n")
+
+
+def mc_clustering(
+    iterator_a, iterator_b, Xa, Xb, labels_a, labels_b, k, solver, npz_path, txt_path
+):
+    """Phase 2: MC consensus clustering with chosen k and solver."""
+    res_fuzzy = fuzzy_fit_predict(
+        iterator_a=iterator_a,
+        iterator_b=iterator_b,
+        solver=solver,
+        k=k,
+        random_state=RANDOM_SEED,
+        n_a=len(Xa),
+        n_b=len(Xb),
+        ref_labels=labels_a,
+        n_samples=N_SAMPLES,
+    )
+
+    # Save consensus robustness metrics
+    agree_a = int((labels_a == res_fuzzy.consensus_a).sum())
+    agree_b = int((labels_b == res_fuzzy.consensus_b).sum())
+    ari_a = adjusted_rand_score(labels_a, res_fuzzy.consensus_a)
+    ari_b = adjusted_rand_score(labels_b, res_fuzzy.consensus_b)
+
+    robustness_lines = [
+        f"Consensus robustness ({N_SAMPLES} MC draws, {solver}, k={k})",
+        f"Stability (cohort A): {res_fuzzy.stability_a:.3f}",
+        f"Stability (cohort B): {res_fuzzy.stability_b:.3f}",
+        f"ARI deterministic vs consensus (A): {ari_a:.3f}",
+        f"ARI deterministic vs consensus (B): {ari_b:.3f}",
+        f"Agreement (A): {agree_a}/{len(Xa)} ({agree_a/len(Xa):.1%})",
+        f"Agreement (B): {agree_b}/{len(Xb)} ({agree_b/len(Xb):.1%})",
+    ]
+    for line in robustness_lines:
+        print(line)
+
+    with open(txt_path, "w", encoding="utf-8") as f:
+        f.write("\n".join(robustness_lines) + "\n")
+    print(f"Saved: {txt_path}")
+
+    np.savez_compressed(npz_path, **vars(res_fuzzy))
+    print(f"Saved: {npz_path}\n")
 
 
 def metric_ablation(bma_a, out_dir, k, solver):
@@ -210,7 +276,6 @@ def metric_ablation(bma_a, out_dir, k, solver):
             cols = base_cols + [metric]
         Xs[metric] = StandardScaler().fit_transform(bma_a[cols])
 
-    print("=== Metric ablation ===")
     sens_X = ablate_X(Xs, solver=solver, k=k, random_state=RANDOM_SEED)
     sens_X_out = (
         sens_X.drop(["labels", "sizes", "clusterer"], axis=1)
@@ -220,78 +285,18 @@ def metric_ablation(bma_a, out_dir, k, solver):
     print(sens_X_out.to_markdown())
     out_path = f"{out_dir}/ablate_metric.csv"
     sens_X_out.to_csv(out_path, index=False)
-    print(f"Saved: {out_path}")
-    print()
-
-
-def consensus_clustering(
-    iterator_a, iterator_b, Xa, Xb, Xa_scaled, Xb_scaled, k, solver
-):
-    """Phase 2: MC consensus clustering with chosen k and solver."""
-    resa = fit_predict(X=Xa_scaled, solver=solver, k=k, random_state=RANDOM_SEED)
-    resb_labels = resa.clusterer.predict(Xb_scaled)
-    res = fuzzy_fit_predict(
-        iterator_a=iterator_a,
-        iterator_b=iterator_b,
-        solver=solver,
-        k=k,
-        random_state=RANDOM_SEED,
-        n_a=len(Xa),
-        n_b=len(Xb),
-        ref_labels=resa.labels,
-        n_samples=N_SAMPLES,
-    )
-
-    print(f"Stability (cohort A): {res.stability_a:.3f}")
-    print(f"Stability (cohort B): {res.stability_b:.3f}")
-    print(
-        "ARI (consensus vs deterministic):",
-        adjusted_rand_score(resa.labels, res.consensus_a),
-    )
-    print(
-        "ARI (cohort A vs. cohort B):",
-        adjusted_rand_score(resb_labels, res.consensus_b),
-    )
-
-    Xa["label"] = res.consensus_a
-    Xa["Cluster"] = Xa["label"].map(CLUSTER_NAMES)
-    Xb["label"] = res.consensus_b
-    Xb["Cluster"] = Xb["label"].map(CLUSTER_NAMES)
-
-    pca = PCA(n_components=2, random_state=RANDOM_SEED)
-    Xa[["PC1", "PC2"]] = pca.fit_transform(Xa_scaled)
-    Xb[["PC1", "PC2"]] = pca.transform(Xb_scaled)
-
-    out = f"{DEFAULT_DATA_DIR}/processed"
-    Xa.to_csv(f"{out}/behav_Xa.csv")
-    print(f"Saved: {out}/behav_Xa.csv")
-    Xb.to_csv(f"{out}/behav_Xb.csv")
-    print(f"Saved: {out}/behav_Xb.csv")
-    npz_path = f"{out}/mc_consensus_{solver}_{k}.npz"
-    np.savez_compressed(
-        npz_path,
-        label_counts_a=res.label_counts_a,
-        label_counts_b=res.label_counts_b,
-        consensus_a=res.consensus_a,
-        consensus_b=res.consensus_b,
-        stability_a=res.stability_a,
-        stability_b=res.stability_b,
-        scaler_means=res.scaler_means,
-        scaler_scales=res.scaler_scales,
-        n_samples=res.n_samples,
-    )
-    print(f"Saved: {npz_path}")
+    print(f"Saved: {out_path}\n")
 
 
 if __name__ == "__main__":
     args = parse_args()
 
-    out_dir = f"{DEFAULT_DATA_DIR}/processed/sensitivity_clustering"
-    os.makedirs(out_dir, exist_ok=True)
-
+    # Phase 0a: Load data for both cohorts
+    print("Loading data for both cohorts (excluding outliers)")
     iterator_a, bma_a = load_data("a")
     iterator_b, bma_b = load_data("b")
 
+    # Phase 0b: Prepare feature matrices for clustering
     Xa = bma_a.drop(columns=DEFAULT_COLS_TO_DROP)
     Xb = bma_b.drop(columns=DEFAULT_COLS_TO_DROP)
 
@@ -302,27 +307,45 @@ if __name__ == "__main__":
     # pylint: disable=unsubscriptable-object
     Xa_scaled = scaler.fit_transform(Xa[features])
     Xb_scaled = scaler.transform(Xb[features])
-    # pylint: enable=unsubscriptable-object
 
     # Phase 1: Grid search (k × solver) → pick best solver + optimal k
-    best_solver, optimal_k = grid_search(Xa_scaled, out_dir)
+    print("Phase 1: k × solver grid search (silhouette + gap statistic)")
+    best_solver, optimal_k = grid_search(Xa_scaled, out_dir=DEFAULT_CLUSTER_DIR_A)
 
     k = optimal_k if args.kbest == "auto" else args.kbest
     solver = best_solver if args.sbest == "auto" else args.sbest
     print(f"\nUsing k={k}, solver={solver}\n")
 
-    # Phase 2: Consensus clustering
-    processed = f"{DEFAULT_DATA_DIR}/processed"
-    npz_path = f"{processed}/mc_consensus_{solver}_{k}.npz"
+    # Phase 2: Cluster with chosen k and solver, save cluster assignments.
+    print("Phase 2: Cluster and save with chosen k and solver")
+    cluster_and_save(Xa, Xb, Xa_scaled, Xb_scaled, k=k, solver=solver)
+    labels_a = Xa["label"].values
+    labels_b = Xb["label"].values
+    # pylint: enable=unsubscriptable-object
+
+    # Phase 3: MC-based clustering
+    print("Phase 3: MC-based clustering")
+    npz_path = f"{DEFAULT_CLUSTER_DIR_A}/mc_{solver}_{k}.npz"
+    txt_path = f"{DEFAULT_CLUSTER_DIR_A}/mc_{solver}_{k}_stats.txt"
     if not args.overwrite and os.path.exists(npz_path):
-        print(
-            f"Consensus output exists ({npz_path}), skipping (use --overwrite to re-run)"
-        )
+        print(f"\tMC output exists ({npz_path}), skipping (use --overwrite to re-run)")
     else:
-        print(f"=== Consensus clustering (k={k}, {solver}) ===")
-        consensus_clustering(
-            iterator_a, iterator_b, Xa, Xb, Xa_scaled, Xb_scaled, k=k, solver=solver
+        print(f"\tRunning MC clustering (k={k}, {solver})")
+        mc_clustering(
+            iterator_a,
+            iterator_b,
+            Xa,
+            Xb,
+            labels_a,
+            labels_b,
+            k=k,
+            solver=solver,
+            npz_path=npz_path,
+            txt_path=txt_path,
         )
 
-    # Phase 3: Metric ablation
-    metric_ablation(bma_a, out_dir, k=k, solver=solver)
+    # Phase 4: Metric ablation
+    print("Phase 4: Metric ablation")
+    metric_ablation(bma_a, out_dir=DEFAULT_CLUSTER_DIR_A, k=k, solver=solver)
+
+    print("Done.")
