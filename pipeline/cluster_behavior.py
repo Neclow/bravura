@@ -284,7 +284,7 @@ def metric_ablation(bma_a, out_dir, k, solver):
     )
     print(sens_X_out.to_markdown())
     out_path = f"{out_dir}/ablate_metric.csv"
-    sens_X_out.to_csv(out_path, index=False)
+    sens_X_out.to_csv(out_path, index_label="metric")
     print(f"Saved: {out_path}\n")
 
 
